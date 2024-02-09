@@ -1,7 +1,6 @@
 Map = Object:extend()
 
 currentLevel = 0
-key = {}
 
 local mapBackground = {}
 
@@ -136,6 +135,7 @@ function Map:new()
     self.upstairsRoom = nil
     self.downstairsRoom = nil
     self.currentRoom = Room(0, 0, 0, {})
+    self.lowestLevel = 0
     
     mapBackground.image = ui.images.itemBackgound
     mapBackground.width = mapBackground.image:getWidth()
@@ -191,6 +191,7 @@ function Map:generate(seed)
     map.dungeonMap = {}
 
     local maxRooms = love.math.random(15, map.maxRooms)
+    local hasteleportRoom = false
     local currentRooms = 0
 
     for i = 1, map.height do
@@ -218,10 +219,11 @@ function Map:generate(seed)
             map.dungeonMap[newCol][newRow] = ROOM_TYPES.chest
         elseif love.math.random(1, 100) == ROOM_TYPES.key then
             map.dungeonMap[newCol][newRow] = ROOM_TYPES.key
-        elseif love.math.random(1, 200) == ROOM_TYPES.health then
+        elseif love.math.random(1, 100) == ROOM_TYPES.health then
             map.dungeonMap[newCol][newRow] = ROOM_TYPES.health
-        elseif love.math.random(1, 300) == ROOM_TYPES.teleport then
+        elseif love.math.random(1, 200) == ROOM_TYPES.teleport and not hasteleportRoom then
             map.dungeonMap[newCol][newRow] = ROOM_TYPES.teleport
+            hasteleportRoom = true
         else
             map.dungeonMap[newCol][newRow] = roomType
         end
@@ -261,6 +263,11 @@ function Map:goDownstairs()
     end
 
     currentLevel = currentLevel + 1
+
+    if currentLevel > map.lowestLevel then
+        map.lowestLevel = currentLevel
+    end
+
     map.showMap = true
     map:generate(currentLevel)
     map:goToRoom(map.upstairsRoom)
@@ -293,9 +300,6 @@ function Map:goToRoom(room)
         enemy = Enemy()
         enemy.dead = false
         map.currentRoom.enemyDefeated = true
-    elseif map.currentRoom.type == ROOM_TYPES.key then
-        key = {}
-        key.level = currentLevel
     elseif map.currentRoom.type == ROOM_TYPES.chest then
         local chestNumber = map.currentRoom.buttons[1].filePath:match("(%d+)")
 
@@ -303,6 +307,18 @@ function Map:goToRoom(room)
             map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/Chest" .. chestNumber .. "a.png")
         else
             map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/Chest" .. chestNumber .. "b.png")
+        end
+    elseif map.currentRoom.type == ROOM_TYPES.teleport then
+        if not map.currentRoom.teleportDiscovered then
+            map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/TeleportShrineA.png")
+        else
+            map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/TeleportShrineB.png")
+        end
+    elseif map.currentRoom.type == ROOM_TYPES.health then
+        if not map.currentRoom.healingShrineUsed then
+            map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/HealingShrineA.png")
+        else
+            map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/HealingShrineB.png")
         end
     end
 end
@@ -312,10 +328,10 @@ function Map:openChest()
         if #player.inventory.items < 20 then
             local useKey = false
 
-            for k, v in ipairs(player.keys) do
-                if v.level >= currentLevel then
+            for k, v in ipairs(player.inventory.items) do
+                if v.level >= currentLevel and v.type == "Key" then
                     useKey = v
-                    table.remove(player.keys, k)
+                    table.remove(player.inventory.items, k)
                     break
                 end
             end
@@ -338,7 +354,7 @@ function Map:openChest()
             map.currentRoom.chest.isLooted = true
 
             player.gold = player.gold + math.random(200, 500)
-            player.inventory:giveRandomWeapon(currentLevel + 3, currentLevel + 8)
+            player.inventory:giveRandomWeapon(currentLevel + 2, currentLevel + 4)
         else
             music:play(music.sfx.inventoryAlreadyFullVoiceSFX)
         end

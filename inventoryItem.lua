@@ -1,10 +1,13 @@
 InventoryItem = Object:extend()
 
 function InventoryItem:new(type, code, level)
+    if type ~= "Key" then
+        self.equipButton = Button(0, 0, "Assets/EquipButton.png", InventoryItem.equipItem)
+        self.equipButton.visible = true
+    end
+
     self.deleteButton = Button(0, 0, "Assets/DeleteButton.png", InventoryItem.deleteItem)
-    self.equipButton = Button(0, 0, "Assets/EquipButton.png", InventoryItem.equipItem)
     self.deleteButton.visible = true
-    self.equipButton.visible = true
 
     self.type = type
     self.code = code
@@ -27,10 +30,13 @@ function InventoryItem:new(type, code, level)
 end
 
 function InventoryItem:update(dt)
+    if type ~= "Key" then
+        self.equipButton.x = ((self.x + self.width) - self.equipButton.width) - 15
+        self.equipButton.y = ((self.y + self.height) - (self.equipButton.height * 2)) - 30
+    end
+
     self.deleteButton.x = ((self.x + self.width) - self.deleteButton.width) - 15
     self.deleteButton.y = ((self.y + self.height) - self.deleteButton.height) - 20
-    self.equipButton.x = ((self.x + self.width) - self.equipButton.width) - 15
-    self.equipButton.y = ((self.y + self.height) - (self.equipButton.height * 2)) - 30
 end
 
 function InventoryItem:draw()
@@ -64,29 +70,45 @@ function InventoryItem:draw()
 end
 
 function InventoryItem:mousepressed(x, y, button, istouch, presses)
+    if type ~= "Key" then
+        self.equipButton:mousepressed(x, y, button, istouch, presses)
+    end
+
     self.deleteButton:mousepressed(x, y, button, istouch, presses)
-    self.equipButton:mousepressed(x, y, button, istouch, presses)
 end
 
 function InventoryItem:deleteItem()
     if #player.inventory.items > 1 then
-        music:play(music.sfx.deleteItemSFX)
-
-        local isDeleteSelected = false
+        local isWeapon = false
+        local totalWeapons = 0
 
         for i, item in ipairs(player.inventory.items) do
             if pointRectCollision(love.mouse:getX(), love.mouse:getY(), item) then
                 if item.selected then
-                    isDeleteSelected = true
+                    player.inventory.isDeleteSelected = true
                 end
 
-                table.remove(player.inventory.items, i)
-                break
+                if item.type ~= "Key" then
+                    totalWeapons = totalWeapons + 1
+                end
+
+                player.inventory.indexToDelete = i
+            elseif item.type ~= "Key" then
+                totalWeapons = totalWeapons + 1
+
+                if i ~= 1 then
+                    player.inventory.nextWeaponIndex = i - 1
+                else
+                    player.inventory.nextWeaponIndex = i
+                end
             end
         end
 
-        if isDeleteSelected then
-            player.inventory.items[1].selected = true
+        if (isWeapon and totalWeapons > 1) or not isWeapon then
+            player.inventory.confirmPopup.visible = true
+            music:play(music.sfx.buttonPressSFX)
+        else
+            music:play(music.sfx.cantDeleteVoiceSFX)
         end
     else
         music:play(music.sfx.cantDeleteVoiceSFX)
@@ -99,7 +121,9 @@ function InventoryItem:equipItem()
     for i, item in ipairs(player.inventory.items) do
         if item.selected then
             item.selected = false
-        elseif pointRectCollision(love.mouse:getX(), love.mouse:getY(), item) then
+        end
+        
+        if pointRectCollision(love.mouse:getX(), love.mouse:getY(), item) then
             item.selected = true
 
             player.image = love.graphics.newImage("Assets/" .. item.type .. item.code .. ".png")

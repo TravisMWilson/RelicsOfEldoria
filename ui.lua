@@ -13,6 +13,7 @@ local timeIndicator = {}
 local expIndicator = {}
 local deathImage = {}
 local healthBar = {}
+local relicUI = {}
 
 local playingStory = false
 local playStoryPart = 1
@@ -80,6 +81,12 @@ local function setupDisplay(self)
     healthPotionUI.x = (love.graphics:getWidth() - 20) - healthPotionUI.width
     healthPotionUI.y = (love.graphics:getHeight() - 20) - healthPotionUI.height
     
+    relicUI.image = self.images.relicUI
+    relicUI.width = relicUI.image:getWidth()
+    relicUI.height = relicUI.image:getHeight()
+    relicUI.x = (love.graphics:getWidth() - 20) - relicUI.width
+    relicUI.y = (love.graphics:getHeight() - 20) - relicUI.height - healthPotionUI.height - 20
+    
     deathImage.image = self.images.death
     deathImage.x = 0
     deathImage.y = love.graphics.getHeight() - deathImage.image:getHeight()
@@ -97,6 +104,7 @@ local function drawDisplay()
     setColor(255/255, 255/255, 255/255, 255/255)
     love.graphics.draw(healthBar.image, healthBar.x, healthBar.y)
     love.graphics.draw(healthPotionUI.image, healthPotionUI.x, healthPotionUI.y)
+    love.graphics.draw(relicUI.image, relicUI.x, relicUI.y)
     resetColor()
 
     setColor(14/255, 171/255, 66/255, 255/255)
@@ -105,6 +113,16 @@ local function drawDisplay()
         tostring(player.healthPotions),
         (healthPotionUI.x - 15) - love.graphics.getFont():getWidth(player.healthPotions),
         (love.graphics:getHeight() - 20) - love.graphics.getFont():getHeight()
+    )
+    resetFont()
+    resetColor()
+
+    setColor(246/255, 55/255, 53/255, 255/255)
+    setFont(25)
+    love.graphics.print(
+        tostring(player.relics),
+        (relicUI.x - 15) - love.graphics.getFont():getWidth(player.relics),
+        (love.graphics:getHeight() - 40) - healthPotionUI.height - love.graphics.getFont():getHeight()
     )
     resetFont()
     resetColor()
@@ -192,6 +210,8 @@ function UI:new()
     self.images.deleteButton = love.graphics.newImage("Assets/DeleteButton.png")
     self.images.statsButton = love.graphics.newImage("Assets/StatsButton.png")
     self.images.equipButton = love.graphics.newImage("Assets/EquipButton.png")
+    self.images.waypointUI = love.graphics.newImage("Assets/WaypointUI.png")
+    self.images.relicUI = love.graphics.newImage("Assets/RelicUI.png")
     self.images.death = love.graphics.newImage("Assets/Death.png")
         
     self.images.storyScene1Logo = love.graphics.newImage("Assets/StoryScene1.png")

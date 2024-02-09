@@ -9,6 +9,7 @@ local swingDirection = {}
 
 local attackDelayTimer = 0
 local deathDelayTimer = 0
+local waypointScrollOffset = 0
 
 local function reset(self)
     self.health = self.maxHealth
@@ -90,7 +91,8 @@ function Player:new()
     self.gold = 0
     self.exp = 0
 
-    self.keys = {}
+    self.waypoints = { 0 }
+    self.waypointDisplay = {}
 
     self.expNeeded = self.level * 100
     self.health = self.maxHealth
@@ -105,7 +107,10 @@ function Player:update(dt)
     attackDelayTimer = attackDelayTimer + dt
     moveSword(self)
     handleDeath(self, dt)
-    self.inventory:update(dt)
+
+    if #self.waypointDisplay == 0 then
+        self.inventory:update(dt)
+    end
 end
 
 function Player:draw()
@@ -114,7 +119,14 @@ function Player:draw()
     end
 
     self:playerAttackHandler()
-    self.inventory:draw()
+
+    if #self.waypointDisplay > 0 then
+        for i, point in ipairs(self.waypointDisplay) do
+            love.graphics.draw(point.image, point.x, point.y + waypointScrollOffset)
+        end
+    else
+        self.inventory:draw()
+    end
 end
 
 function Player:attacking()
@@ -221,10 +233,7 @@ end
 
 function Player:keypressed(key)
     if key == "h" and self.healthPotions > 0 then
-        self.health = self.maxHealth
-        self.healthPotions = self.healthPotions - 1
-        music:play(music.sfx.drinkPotionSFX)
-        music:play(music.sfx.potionHealSFX)
+        self:useHealthPotion()
     elseif key == "escape" then
         ui.skipScenes = true
     elseif key == "n" then
@@ -234,15 +243,34 @@ end
 
 function Player:wheelmoved(x, y)
     self.inventory:wheelmoved(x, y)
+
+    if #self.waypointDisplay > 0 then
+        local minX = (love.graphics:getWidth() / 2) - (self.background:getWidth() / 2)
+        local maxX = minX + self.background:getWidth()
+    
+        if love.mouse.getX() > minX and love.mouse.getX() < maxX then
+            if y > 0 then
+                waypointScrollOffset = waypointScrollOffset + 20
+    
+                if waypointScrollOffset > 0 then
+                    waypointScrollOffset = 0
+                end
+            elseif y < 0 then
+                waypointScrollOffset = waypointScrollOffset - 20
+            end
+        end
+    end
 end
 
 function Player:addKey()
     if not map.currentRoom.keyPickedUp then
         map.currentRoom.keyPickedUp = true
         music:play(music.sfx.pickupKeySFX)
-        table.insert(player.keys, key)
+
+        local keyNumber = map.currentRoom.buttons[1].filePath:match("(%d+)")
+
+        table.insert(player.inventory.items, InventoryItem("Key", keyNumber, currentLevel))
         map.currentRoom.buttons = {}
-        key = {}
     end
 end
 
@@ -263,15 +291,68 @@ function Player:addRelic()
     end
 end
 
-function Player:teleport()
+function Player:addTeleport()
+    local levelAlreadyAdded = false
+
+    for i, v in ipairs(player.waypoints) do
+        if v == currentLevel then
+            levelAlreadyAdded = true
+        end
+    end
+    
+    if not levelAlreadyAdded then
+        table.insert(player.waypoints, currentLevel)
+        map.currentRoom.teleportDiscovered = true
+        map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/TeleportShrineB.png")
+    else
+        player.waypointDisplay = {}
+
+        for _, point in ipairs(player.waypoints) do
+            table.insert(player.waypointDisplay, Waypoint(point.level))
+        end
+    end
+end
+
+function Player:teleport(waypoint)
     music:play(music.sfx.teleportSFX)
-    map.currentRoom = Room(0, 0, 0, {})
-    currentLevel = 0
+    currentLevel = waypoint
+    map:generate(currentLevel)
+
+    if currentLevel == 0 then
+        map.currentRoom = Room(0, 0, 0, {})
+        map.showMap = false
+    else
+        for _, room in pairs(map.dungeonMap) do
+            if room.type == ROOM_TYPES.teleport then
+                map.currentRoom = room
+                break
+            end
+        end
+
+        map.showMap = true
+    end
+end
+
+function Player:useHealthPotion()
+    if player.health ~= player.maxHealth then
+        self.health = self.maxHealth
+        self.healthPotions = self.healthPotions - 1
+        music:play(music.sfx.drinkPotionSFX)
+        music:play(music.sfx.potionHealSFX)
+    else
+        music:play(music.sfx.alreadyFullHealthVoiceSFX)
+    end
 end
 
 function Player:heal()
-    player.health = player.maxHealth
-    music:play(music.sfx.healSFX)
+    if player.health ~= player.maxHealth then
+        player.health = player.maxHealth
+        music:play(music.sfx.healSFX)
+        map.currentRoom.healingShrineUsed = true
+        map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/HealingShrineb.png")
+    else
+        music:play(music.sfx.alreadyFullHealthVoiceSFX)
+    end
 end
 
 function Player:openInventory()

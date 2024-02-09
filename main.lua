@@ -6,17 +6,14 @@
     - bosses need special attacks
     - discorved Teleports are added to list to teleport back to
     - need to add a save/load
+    - add partical effects
 ]]
 
-local SCREEN_WIDTH = 1500
-local SCREEN_HEIGHT = 750
-
 function love.load()
-    love.window.setMode(SCREEN_WIDTH, SCREEN_HEIGHT)
-    love.window.setTitle("Relics of Eldoria")
-
     Object = require "classic"
     require "button"
+    require "waypoint"
+    require "confirmPopup"
     require "player"
     require "enemy"
     require "Math"

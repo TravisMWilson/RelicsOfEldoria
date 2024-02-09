@@ -51,14 +51,14 @@ local ROOM_BUTTONS = {
     health = { Button(
         (love.graphics:getWidth() / 2) - 170,
         (love.graphics:getHeight() * 0.8) - 465,
-        "Assets/HealingShrine.png",
+        "Assets/HealingShrineA.png",
         Player.heal
     ) },
     teleport = { Button(
         (love.graphics:getWidth() / 2) - 175,
         (love.graphics:getHeight() * 0.8) - 465,
-        "Assets/TeleportShrine.png", 
-        Player.teleport
+        "Assets/TeleportShrineA.png", 
+        Player.addTeleport
     ) },
     potion = { Button(
         (love.graphics:getWidth() / 2) - 35,
@@ -207,6 +207,8 @@ function Room:new(row, col, type, adjacentRooms)
     self.chest.isOpened = false
     self.chest.isLooted = false
 
+    self.healingShrineUsed = false
+    self.teleportDiscovered = false
     self.enemyDefeated = false
     self.discovered = false
     self.searched = false

@@ -29,6 +29,11 @@ function Inventory:new()
     self.items[1].selected = true
 
     self.maxItems = 20
+
+    self.confirmPopup = ConfirmPopup()
+    self.indexToDelete = 0
+    self.isDeleteSelected = false
+    self.nextWeaponIndex = nil
 end
 
 function Inventory:update(dt)
@@ -51,6 +56,23 @@ function Inventory:update(dt)
 
             item:update(dt)
         end
+
+        if self.confirmPopup.visible and self.confirmPopup.answer then
+            if self.confirmPopup.answer == "Yes" then
+                table.remove(player.inventory.items, self.indexToDelete)
+
+                if self.isDeleteSelected then
+                    player.inventory.items[self.nextWeaponIndex].selected = true
+                end
+                
+                music:play(music.sfx.deleteItemSFX)
+            else
+                music:play(music.sfx.buttonPressSFX)
+            end
+
+            self.confirmPopup.answer = false
+            self.confirmPopup.visible = false
+        end
     end
 end
 
@@ -67,10 +89,14 @@ function Inventory:draw()
         setFont(24)
         love.graphics.print("INVENTORY", (love.graphics:getWidth() / 2) - (love.graphics.getFont():getWidth("INVENTORY") / 2), 18)
         resetFont()
+        
+        self.confirmPopup:draw()
     end
 end
 
 function Inventory:mousepressed(x, y, button, istouch, presses)
+    self.confirmPopup:mousepressed(x, y, button, istouch, presses)
+
     for _, item in pairs(self.items) do
         item:mousepressed(x, y, button, istouch, presses)
     end
@@ -89,7 +115,6 @@ function Inventory:wheelmoved(x, y)
             end
         elseif y < 0 then
             inventoryScrollOffset = inventoryScrollOffset - 20
-            print(inventoryScrollOffset)
 
             local maxHeight = (((ui.images.itemBackgound:getHeight() * 5) + ui.images.inventoryTitle:getHeight()) - love.graphics:getHeight()) * -1
 

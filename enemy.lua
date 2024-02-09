@@ -11,7 +11,7 @@ local NUMBER_OF_BOSSES = 11
 function Enemy:new()
     self.level = math.random(currentLevel, currentLevel + 5)
 
-    if math.random(1, 600) == 1 then
+    if math.random(1, 300) == 1 then
         self.isBoss = true
         self.image = love.graphics.newImage("Assets/Boss" .. math.random(1, NUMBER_OF_BOSSES) .. ".png")
         self.maxHealth = self.level * 175
@@ -98,7 +98,7 @@ function Enemy:update(dt)
         player.gold = player.gold + math.random(1, 20)
 
         if math.random(1, 25) == 1 then
-            player.inventory:giveRandomWeapon(self.level, self.level + 2)
+            player.inventory:giveRandomWeapon(self.level, self.level + 1)
         end
 
         if self.isBoss and player.relics < 10 then

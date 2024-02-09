@@ -76,6 +76,7 @@ function Music:new()
     self.sfx.inventoryFullVoiceSFX = love.audio.newSource("SFX/InventoryFullVoice.wav", "static")--
     self.sfx.inventoryGettingFullVoiceSFX = love.audio.newSource("SFX/InventoryGettingFullVoice.wav", "static")--
     self.sfx.inventoryAlreadyFullVoiceSFX = love.audio.newSource("SFX/InventoryAlreadyFullVoice.wav", "static")--
+    self.sfx.alreadyFullHealthVoiceSFX = love.audio.newSource("SFX/AlreadyFullHealthVoice.wav", "static")--
     setLooping(self.sfx, false)
 
     self.voice = {}
