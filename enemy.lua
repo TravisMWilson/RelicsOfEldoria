@@ -9,11 +9,11 @@ local NUMBER_OF_ENEMIES = 87
 local NUMBER_OF_BOSSES = 11
 
 function Enemy:new()
-    self.level = math.random(currentLevel, currentLevel + 5)
+    self.level = love.math.random(currentLevel, currentLevel + 5)
 
-    if math.random(1, 300) == 1 then
+    if love.math.random(1, 300) == 1 then
         self.isBoss = true
-        self.image = love.graphics.newImage("Assets/Boss" .. math.random(1, NUMBER_OF_BOSSES) .. ".png")
+        self.image = love.graphics.newImage("Assets/Boss" .. love.math.random(1, NUMBER_OF_BOSSES) .. ".png")
         self.maxHealth = self.level * 175
 
         if player.relics == 9 then
@@ -21,7 +21,7 @@ function Enemy:new()
         end
     else
         self.isBoss = false
-        self.image = love.graphics.newImage("Assets/Enemy" .. math.random(1, NUMBER_OF_ENEMIES) .. ".png")
+        self.image = love.graphics.newImage("Assets/Enemy" .. love.math.random(1, NUMBER_OF_ENEMIES) .. ".png")
         self.maxHealth = self.level * 25
     end
     
@@ -33,7 +33,7 @@ function Enemy:new()
     self.health = self.maxHealth
     self.dead = true
     self.damage = 0
-    self.speed = math.random(7, 20) / 10
+    self.speed = love.math.random(7, 20) / 10
 
     self.blocking = false
     self.enemyTimer = 0
@@ -95,9 +95,12 @@ function Enemy:update(dt)
         displayText("Enemy Died", 200, 40, 2, { r = 255/255, g = 0, b = 0, a = 255/255 })
         
         player:giveExp()
-        player.gold = player.gold + math.random(1, 20)
 
-        if math.random(1, 25) == 1 then
+        local goldIncrease = love.math.random(1, 20)
+        player.gold = player.gold + goldIncrease
+        player.totalGold = player.totalGold + goldIncrease
+
+        if love.math.random(1, 25) == 1 then
             player.inventory:giveRandomWeapon(self.level, self.level + 1)
         end
 
@@ -169,15 +172,15 @@ function Enemy:enemyAttackHandler(dt)
                 )
                 
                 if enemy:isBlocking() then
-                    enemyAttack.x2 = enemyAttack.x2 + direction.x * speed + math.random(-15, 15)
-                    enemyAttack.y2 = enemyAttack.y2 + direction.y * speed + math.random(-15, 15)
+                    enemyAttack.x2 = enemyAttack.x2 + direction.x * speed + love.math.random(-15, 15)
+                    enemyAttack.y2 = enemyAttack.y2 + direction.y * speed + love.math.random(-15, 15)
                 else
-                    enemyAttack.x2 = enemyAttack.x2 - direction.x * speed + math.random(-15, 15)
-                    enemyAttack.y2 = enemyAttack.y2 - direction.y * speed + math.random(-15, 15)
+                    enemyAttack.x2 = enemyAttack.x2 - direction.x * speed + love.math.random(-15, 15)
+                    enemyAttack.y2 = enemyAttack.y2 - direction.y * speed + love.math.random(-15, 15)
                 end
             else
-                enemyAttack.x2 = enemyAttack.x2 + math.random(-50, 50)
-                enemyAttack.y2 = enemyAttack.y2 + math.random(-50, 50)
+                enemyAttack.x2 = enemyAttack.x2 + love.math.random(-50, 50)
+                enemyAttack.y2 = enemyAttack.y2 + love.math.random(-50, 50)
             end
         else
             if attackBlocked() then
@@ -198,15 +201,15 @@ function Enemy:enemyAttackHandler(dt)
 
             enemyAttack = {}
 
-            if math.random(2) == 1 then
+            if love.math.random(2) == 1 then
                 enemy:setBlocking(true)
             else
                 enemy:setBlocking(false)
             end
         end
     else
-        local startX = math.random((love.graphics.getWidth() / 2) - 100, (love.graphics.getWidth() / 2) + 100)
-        local startY = math.random(self.y, self.y + 200)
+        local startX = love.math.random(self.x, self.x + self.width)
+        local startY = love.math.random(self.y, self.y + (self.height / 2))
 
         enemyAttack.x1, enemyAttack.y1 = startX, startY
         enemyAttack.x2, enemyAttack.y2 = startX, startY

@@ -13,9 +13,16 @@ function resetColor()
     love.graphics.setColor(currentColor.r, currentColor.g, currentColor.b, currentColor.a)
 end
 
-function setFont(scale)
+function setFont(scale, ...)
+    local otherFont = {...}
+
     currentFont = love.graphics.getFont()
-    love.graphics.setFont(love.graphics.newFont("Assets/Candarab.ttf", scale))
+
+    if #otherFont == 0 then
+        love.graphics.setFont(love.graphics.newFont("Assets/Candarab.ttf", scale))
+    else
+        love.graphics.setFont(love.graphics.newFont(otherFont[1], scale))
+    end
 end
 
 function resetFont()

@@ -52,7 +52,7 @@ function Music:new()
     self.sfx.skillOpenSFX = love.audio.newSource("SFX/SkillOpen.mp3", "static")
     self.sfx.teleportSFX = love.audio.newSource("SFX/Teleport.wav", "static")--
     self.sfx.deathLaughterSFX = love.audio.newSource("SFX/DeathLaughter.mp3", "static")--
-    self.sfx.deathSFX = love.audio.newSource("SFX/DeathSFX.wav", "static")--
+    self.sfx.deathSFX = love.audio.newSource("SFX/DeathSFX.mp3", "static")--
     self.sfx.blockSFX = love.audio.newSource("SFX/BlockSFX.mp3", "static")--
     self.sfx.buttonPressSFX = love.audio.newSource("SFX/ButtonPressSFX.mp3", "static")
     self.sfx.enterDungeonSFX = love.audio.newSource("SFX/EnterDungeonSFX.mp3", "static")--
@@ -77,6 +77,10 @@ function Music:new()
     self.sfx.inventoryGettingFullVoiceSFX = love.audio.newSource("SFX/InventoryGettingFullVoice.wav", "static")--
     self.sfx.inventoryAlreadyFullVoiceSFX = love.audio.newSource("SFX/InventoryAlreadyFullVoice.wav", "static")--
     self.sfx.alreadyFullHealthVoiceSFX = love.audio.newSource("SFX/AlreadyFullHealthVoice.wav", "static")--
+    self.sfx.powerUsedUpVoiceSFX = love.audio.newSource("SFX/PowerUsedUpVoice.wav", "static")--
+    self.sfx.alreadyThereVoiceSFX = love.audio.newSource("SFX/AlreadyThereVoice.wav", "static")--
+    self.sfx.needBetterKeyVoiceSFX = love.audio.newSource("SFX/NeedBetterKeyVoice.wav", "static")--
+    self.sfx.newSwordVoiceSFX = love.audio.newSource("SFX/NewSwordVoice.wav", "static")--
     setLooping(self.sfx, false)
 
     self.voice = {}

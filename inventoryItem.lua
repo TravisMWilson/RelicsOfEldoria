@@ -30,7 +30,7 @@ function InventoryItem:new(type, code, level)
 end
 
 function InventoryItem:update(dt)
-    if type ~= "Key" then
+    if self.type ~= "Key" then
         self.equipButton.x = ((self.x + self.width) - self.equipButton.width) - 15
         self.equipButton.y = ((self.y + self.height) - (self.equipButton.height * 2)) - 30
     end
@@ -46,14 +46,24 @@ function InventoryItem:draw()
         love.graphics.draw(self.background, self.x, self.y)
     end
 
-    love.graphics.draw(
-        self.icon,
-        (self.x + (self.width / 2)) - ((self.iconWidth * (self.height - 30) / self.iconHeight) / 2),
-        self.y + 15,
-        0,
-        (self.height - 30) / self.iconHeight,
-        (self.height - 30) / self.iconHeight
-    )
+    if self.type == "Key" then
+        love.graphics.draw(
+            self.icon,
+            (self.x + (self.width / 2)) - (self.iconWidth / 2),
+            (self.y + (self.height / 2)) - (self.iconHeight / 2)
+        )
+    else
+        local scale = (self.height - 30) / self.iconHeight
+        
+        love.graphics.draw(
+            self.icon,
+            (self.x + (self.width / 2)) - ((self.iconWidth * scale) / 2),
+            self.y + 15,
+            0,
+            scale,
+            scale
+        )
+    end
 
     setColor(255/255, 159/255, 76/255, 255/255)
     setFont(25)
@@ -66,11 +76,14 @@ function InventoryItem:draw()
     resetColor()
 
     self.deleteButton:draw()
-    self.equipButton:draw()
+
+    if self.type ~= "Key" then
+        self.equipButton:draw()
+    end
 end
 
 function InventoryItem:mousepressed(x, y, button, istouch, presses)
-    if type ~= "Key" then
+    if self.type ~= "Key" then
         self.equipButton:mousepressed(x, y, button, istouch, presses)
     end
 
@@ -81,6 +94,10 @@ function InventoryItem:deleteItem()
     if #player.inventory.items > 1 then
         local isWeapon = false
         local totalWeapons = 0
+
+        player.inventory.isDeleteSelected = false
+        player.inventory.indexToDelete = 0
+        player.inventory.nextWeaponIndex = 0
 
         for i, item in ipairs(player.inventory.items) do
             if pointRectCollision(love.mouse:getX(), love.mouse:getY(), item) then
@@ -108,10 +125,10 @@ function InventoryItem:deleteItem()
             player.inventory.confirmPopup.visible = true
             music:play(music.sfx.buttonPressSFX)
         else
-            music:play(music.sfx.cantDeleteVoiceSFX)
+            music.sfx.cantDeleteVoiceSFX:play()
         end
     else
-        music:play(music.sfx.cantDeleteVoiceSFX)
+        music.sfx.cantDeleteVoiceSFX:play()
     end
 end
 
@@ -131,22 +148,20 @@ function InventoryItem:equipItem()
             player.height = player.image:getHeight()
             player.weaponLevel = item.level
 
-            local defaultPosition = {}
-
             if item.type == "Staff" or item.type == "Spear" then
-                defaultPosition = {
+                player.defaultPosition = {
                     x = (love.graphics.getWidth() * 0.75) - (player.width * 0.75),
                     y = love.graphics.getHeight() - (player.height * 0.65)
                 }
             else
-                defaultPosition = {
+                player.defaultPosition = {
                     x = (love.graphics.getWidth() * 0.75) - (player.width * 0.75),
                     y = love.graphics.getHeight() - (player.height * 0.8)
                 }
             end
 
-            player.x = defaultPosition.x
-            player.y = defaultPosition.y
+            player.x = player.defaultPosition.x
+            player.y = player.defaultPosition.y
         end
     end
 end

@@ -14,6 +14,11 @@ local waypointScrollOffset = 0
 local function reset(self)
     self.health = self.maxHealth
     map.currentRoom = Room(0, 0, 0, {})
+
+    for _, button in ipairs(map.currentRoom.buttons) do
+        button.visible = true
+    end
+
     currentLevel = 0
     deathDelayTimer = 0
     self.dead = false
@@ -61,8 +66,8 @@ local function moveSword(self)
         and self.y >= swingDirection[2].y - speed
         and self.y <= swingDirection[2].y + speed then
             swingingSword = false
-            self.x = defaultPosition.x
-            self.y = defaultPosition.y
+            self.x = self.defaultPosition.x
+            self.y = self.defaultPosition.y
         end
     end
 end
@@ -72,13 +77,13 @@ function Player:new()
     self.width = self.image:getWidth()
     self.height = self.image:getHeight()
 
-    defaultPosition = {
+    self.defaultPosition = {
         x = (love.graphics.getWidth() * 0.75) - (self.width * 0.75),
         y = love.graphics.getHeight() - (self.height * 0.8)
     }
 
-    self.x = defaultPosition.x
-    self.y = defaultPosition.y
+    self.x = self.defaultPosition.x
+    self.y = self.defaultPosition.y
 
     self.healthPotions = 3
     self.weaponLevel = 1
@@ -98,9 +103,13 @@ function Player:new()
     self.health = self.maxHealth
 
     self.inventory = Inventory()
-    self.stats = {}
-    self.stats.open = false
+    self.statsMenu = StatsMenu()
     self.dead = false
+    
+    self.gameStartedTime = os.time()
+    self.enemiesKilled = 0
+    self.chestsLooted = 0
+    self.totalGold = 0
 end
 
 function Player:update(dt)
@@ -122,10 +131,11 @@ function Player:draw()
 
     if #self.waypointDisplay > 0 then
         for i, point in ipairs(self.waypointDisplay) do
-            love.graphics.draw(point.image, point.x, point.y + waypointScrollOffset)
+            point:draw((point.height * (i - 1)) + waypointScrollOffset)
         end
     else
         self.inventory:draw()
+        self.statsMenu:draw()
     end
 end
 
@@ -151,6 +161,7 @@ end
 
 function Player:giveExp()
     self.exp = self.exp + (enemy.level * 5) + 20
+    self.enemiesKilled = self.enemiesKilled + 1
 
     if self.exp >= self.expNeeded then
         music:play(music.sfx.levelUpSFX)
@@ -204,13 +215,19 @@ function Player:playerAttackHandler()
 end
 
 function Player:mousepressed(x, y, button, istouch, presses)
-    self.inventory:mousepressed(x, y, button, istouch, presses)
+    if self.inventory.open then
+        self.inventory:mousepressed(x, y, button, istouch, presses)
+    elseif #self.waypointDisplay > 0 then
+        for _, point in ipairs(player.waypointDisplay) do
+            point:mousepressed(x, y, button, istouch, presses)
+        end
+    end
 
     if button == 1 and not enemy.dead then
         playerAttack = {}
         playerAttack.x1, playerAttack.y1 = x, y
         playerAttack.x2, playerAttack.y2 = x, y
-    elseif button == 1 then
+    elseif button == 1 and not self.inventory.open then
         for _, clickArea in ipairs(map.currentRoom.clickAreas) do
             if pointRectCollision(x, y, clickArea) then
                 if #clickArea.parameter > 0 then
@@ -235,9 +252,13 @@ function Player:keypressed(key)
     if key == "h" and self.healthPotions > 0 then
         self:useHealthPotion()
     elseif key == "escape" then
-        ui.skipScenes = true
+        if #self.waypointDisplay > 0 then
+            self.waypointDisplay = {}
+        else
+            ui.skipScenes = true
+        end
     elseif key == "n" then
-        player.inventory:giveRandomWeapon(1, 5)
+        player.inventory:giveRandomWeapon(1, 1000)
     end
 end
 
@@ -245,8 +266,8 @@ function Player:wheelmoved(x, y)
     self.inventory:wheelmoved(x, y)
 
     if #self.waypointDisplay > 0 then
-        local minX = (love.graphics:getWidth() / 2) - (self.background:getWidth() / 2)
-        local maxX = minX + self.background:getWidth()
+        local minX = (love.graphics:getWidth() / 2) - (self.waypointDisplay[1].width / 2)
+        local maxX = minX + self.waypointDisplay[1].width
     
         if love.mouse.getX() > minX and love.mouse.getX() < maxX then
             if y > 0 then
@@ -301,36 +322,52 @@ function Player:addTeleport()
     end
     
     if not levelAlreadyAdded then
+        music:play(music.sfx.teleportSFX)
         table.insert(player.waypoints, currentLevel)
         map.currentRoom.teleportDiscovered = true
         map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/TeleportShrineB.png")
-    else
+    elseif #player.waypointDisplay == 0 then
         player.waypointDisplay = {}
 
         for _, point in ipairs(player.waypoints) do
-            table.insert(player.waypointDisplay, Waypoint(point.level))
+            table.insert(player.waypointDisplay, Waypoint(point))
         end
+    else
+        player.waypointDisplay = {}
     end
 end
 
-function Player:teleport(waypoint)
-    music:play(music.sfx.teleportSFX)
-    currentLevel = waypoint
+function Player:teleport(level)
+    music:play(music.sfx.buttonPressSFX)
+    player.waypointDisplay = {}
+    currentLevel = level
     map:generate(currentLevel)
 
     if currentLevel == 0 then
         map.currentRoom = Room(0, 0, 0, {})
+        player.health = player.maxHealth
+
+        for _, button in ipairs(map.currentRoom.buttons) do
+            button.visible = true
+        end
+
         map.showMap = false
     else
-        for _, room in pairs(map.dungeonMap) do
-            if room.type == ROOM_TYPES.teleport then
-                map.currentRoom = room
-                break
+        for _, row in pairs(map.dungeonMap) do
+            for _, room in pairs(row) do
+                if room ~= ROOM_TYPES.none then
+                    if room.type == ROOM_TYPES.teleport then
+                        map:goToRoom(room)
+                        break
+                    end
+                end
             end
         end
 
         map.showMap = true
     end
+
+    music:play(music.sfx.teleportSFX)
 end
 
 function Player:useHealthPotion()
@@ -340,18 +377,22 @@ function Player:useHealthPotion()
         music:play(music.sfx.drinkPotionSFX)
         music:play(music.sfx.potionHealSFX)
     else
-        music:play(music.sfx.alreadyFullHealthVoiceSFX)
+        music.sfx.alreadyFullHealthVoiceSFX:play()
     end
 end
 
 function Player:heal()
-    if player.health ~= player.maxHealth then
-        player.health = player.maxHealth
-        music:play(music.sfx.healSFX)
-        map.currentRoom.healingShrineUsed = true
-        map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/HealingShrineb.png")
+    if not map.currentRoom.healingShrineUsed then
+        if player.health ~= player.maxHealth then
+            player.health = player.maxHealth
+            music:play(music.sfx.healSFX)
+            map.currentRoom.healingShrineUsed = true
+            map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/HealingShrineb.png")
+        else
+            music.sfx.alreadyFullHealthVoiceSFX:play()
+        end
     else
-        music:play(music.sfx.alreadyFullHealthVoiceSFX)
+        music.sfx.powerUsedUpVoiceSFX:play()
     end
 end
 
@@ -366,5 +407,12 @@ function Player:openInventory()
 end
 
 function Player:openStats()
-    player.stats.open = not player.stats.open
+    player.statsMenu.open = not player.statsMenu.open
+
+    if player.statsMenu.open then
+        player.statsMenu.characterCount = 0
+        music:play(music.sfx.skillOpenSFX)
+    else
+        music:play(music.sfx.skillCloseSFX)
+    end
 end

@@ -1,16 +1,14 @@
 --[[
     todo list:
 
-    - stats will track time played, lowest dungeon level, enemies killed, chests looted
     - need a tutorial
     - bosses need special attacks
-    - discorved Teleports are added to list to teleport back to
     - need to add a save/load
-    - add partical effects
 ]]
 
 function love.load()
     Object = require "classic"
+    require "particles"
     require "button"
     require "waypoint"
     require "confirmPopup"
@@ -18,6 +16,7 @@ function love.load()
     require "enemy"
     require "Math"
     require "physics"
+    require "statsMenu"
     require "displayText"
     require "clickArea"
     require "map"
@@ -43,6 +42,7 @@ function love.draw()
 end
 
 function love.update(dt)
+    map:update(dt)
     music:update(dt)
     player:update(dt)
     enemy:update(dt)

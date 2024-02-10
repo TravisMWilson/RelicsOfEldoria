@@ -142,10 +142,39 @@ function Map:new()
     mapBackground.height = mapBackground.image:getHeight()
     mapBackground.x = love.graphics:getWidth() - mapBackground.width - 20
     mapBackground.y = 20
+
+    for _, button in ipairs(self.currentRoom.buttons) do
+        button.visible = true
+    end
+
+    self.portal = Particles(690, 220, 300, 5, 50, 0, 70, 10, 0, 0, 0.5, 2.5, 5, 0, 7, 70, "Assets/single_pixel.png")
+    self.portal:setColor(73/255, 53/255, 61/255, 0.3, 73/255, 53/255, 61/255, 0.3, 73/255, 53/255, 61/255, 0)
+
+    self.fire = Particles(515, 555, 30, 2.5, 30, 80, 0, 0, 1.5, 0, 0, 2.5, 0, 1, 0, 0, "Assets/tri_triangle.png")
+    self.fire:setColor(255/255, 247/255, 168/255, 0, 244/255, 132/255, 48/255, 0.9, 244/255, 132/255, 48/255, 0)
+    
+    self.smoke = Particles(515, 400, 30, 3, 30, 200, 0, 0, 1.5, 0, 0.5, 5, 5, 0.2, 2, 100, "Assets/smoke.png")
+    self.smoke:setColor(255/255, 141/255, 22/255, 0.3, 255/255, 255/255, 255/255, 0.5, 67/255, 67/255, 67/255, 0)
+
+    love.math.setRandomSeed(os.time())
+end
+
+function Map:update(dt)
+    if currentLevel == 0 then
+        self.portal:update(dt)
+        self.smoke:update(dt)
+        self.fire:update(dt)
+    end
 end
 
 function Map:draw()
     map.currentRoom:draw()
+
+    if currentLevel == 0 then
+        self.portal:draw()
+        self.smoke:draw()
+        self.fire:draw()
+    end
 
     if map.showMap then
         setColor(255/255, 255/255, 255/255, 255/255)
@@ -185,9 +214,9 @@ function Map:generate(seed)
 
     love.math.setRandomSeed(seed)
 
-    map.width = love.math.random(10, 40)
-    map.height = love.math.random(10, 40)
-    map.maxRooms = (map.width * map.height) / 6
+    map.width = love.math.random(4, 16)
+    map.height = love.math.random(4, 16)
+    map.maxRooms = (map.width * map.height) * 0.75
     map.dungeonMap = {}
 
     local maxRooms = love.math.random(15, map.maxRooms)
@@ -221,7 +250,7 @@ function Map:generate(seed)
             map.dungeonMap[newCol][newRow] = ROOM_TYPES.key
         elseif love.math.random(1, 100) == ROOM_TYPES.health then
             map.dungeonMap[newCol][newRow] = ROOM_TYPES.health
-        elseif love.math.random(1, 200) == ROOM_TYPES.teleport and not hasteleportRoom then
+        elseif love.math.random(1, 100) == ROOM_TYPES.teleport and not hasteleportRoom then
             map.dungeonMap[newCol][newRow] = ROOM_TYPES.teleport
             hasteleportRoom = true
         else
@@ -237,8 +266,11 @@ function Map:generate(seed)
     local downStairsY = connectedEmptySpots[downStairsSpot][2]
 
     map.dungeonMap[downStairsY][downStairsX] = ROOM_TYPES.downstairs
+
     printMap()
     populateRooms()
+    
+    love.math.setRandomSeed(os.time())
 end
 
 function Map:goUpstairs()
@@ -248,6 +280,12 @@ function Map:goUpstairs()
 
     if currentLevel == 0 then
         map.currentRoom = Room(0, 0, 0, {})
+        player.health = player.maxHealth
+
+        for _, button in ipairs(map.currentRoom.buttons) do
+            button.visible = true
+        end
+
         map.showMap = false
     else
         map:goToRoom(map.downstairsRoom)
@@ -274,6 +312,7 @@ function Map:goDownstairs()
 end
 
 function Map:goToRoom(room)
+    player.waypointDisplay = {}
     music:play(music.sfx.changeRoomSFX)
 
     for _, button in ipairs(map.currentRoom.buttons) do
@@ -327,12 +366,15 @@ function Map:openChest()
     if not map.currentRoom.chest.isOpened then
         if #player.inventory.items < 20 then
             local useKey = false
+            local hasKey = false
 
             for k, v in ipairs(player.inventory.items) do
                 if v.level >= currentLevel and v.type == "Key" then
                     useKey = v
                     table.remove(player.inventory.items, k)
                     break
+                elseif v.type == "Key" then
+                    hasKey = true
                 end
             end
 
@@ -342,21 +384,26 @@ function Map:openChest()
 
                 local chestNumber = map.currentRoom.buttons[1].filePath:match("(%d+)")
                 map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/Chest" .. chestNumber .. "b.png")
+            elseif hasKey then
+                music.sfx.needBetterKeyVoiceSFX:play()
             else
                 music:play(music.sfx.noKeySFX)
             end
         else
-            music:play(music.sfx.inventoryAlreadyFullVoiceSFX)
+            music.sfx.inventoryAlreadyFullVoiceSFX:play()
         end
     elseif map.currentRoom.chest.isOpened and not map.currentRoom.chest.isLooted then
         if #player.inventory.items < 20 then
             music:play(music.sfx.lootChestSFX)
             map.currentRoom.chest.isLooted = true
 
-            player.gold = player.gold + math.random(200, 500)
+            local goldIncrease = love.math.random(200, 500)
+            player.gold = player.gold + goldIncrease
+            player.totalGold = player.totalGold + goldIncrease
+            
             player.inventory:giveRandomWeapon(currentLevel + 2, currentLevel + 4)
         else
-            music:play(music.sfx.inventoryAlreadyFullVoiceSFX)
+            music.sfx.inventoryAlreadyFullVoiceSFX:play()
         end
     else
         music:play(music.sfx.noKeySFX)
@@ -364,5 +411,7 @@ function Map:openChest()
 end
 
 function Map:mousepressed(x, y, button, istouch, presses)
-    map.currentRoom:mousepressed(x, y, button, istouch, presses)
+    if enemy.dead then
+        map.currentRoom:mousepressed(x, y, button, istouch, presses)
+    end
 end

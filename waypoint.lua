@@ -7,23 +7,27 @@ function Waypoint:new(level)
     self.level = level
 
     self.x = (love.graphics:getWidth() / 2) - (self.width / 2)
-    self.y = (love.graphics:getHeight() / 2) - (self.height / 2)
-
-    self.options = {
-        ClickArea(self.x + 147, self.y + 12, 145, 29, "Yes"),
-        ClickArea(self.x + 147, self.y + 42, 145, 29, "No")
-    }
+    self.y = 0
 end
 
-function Waypoint:draw()
+function Waypoint:draw(offset)
+    self.y = 0 + offset
     love.graphics.draw(self.image, self.x, self.y)
+
+    setColor(163/255, 225/255, 236/255, 1)
+    setFont(36)
+    love.graphics.print(self.level, self.x + 68, self.y + 25)
+    resetFont()
+    resetColor()
 end
 
 function Waypoint:mousepressed(x, y, button, istouch, presses)
     if button == 1 then
-        for _, option in ipairs(self.options) do
-            if pointRectCollision(x, y, option) then
-                self.answer = option.action
+        if pointRectCollision(x, y, self) then
+            if currentLevel ~= self.level then
+                player:teleport(self.level)
+            else
+                music.sfx.alreadyThereVoiceSFX:play()
             end
         end
     end

@@ -211,6 +211,7 @@ function UI:new()
     self.images.statsButton = love.graphics.newImage("Assets/StatsButton.png")
     self.images.equipButton = love.graphics.newImage("Assets/EquipButton.png")
     self.images.waypointUI = love.graphics.newImage("Assets/WaypointUI.png")
+    self.images.scrollMenu = love.graphics.newImage("Assets/ScrollMenu.png")
     self.images.relicUI = love.graphics.newImage("Assets/RelicUI.png")
     self.images.death = love.graphics.newImage("Assets/Death.png")
         
@@ -230,7 +231,7 @@ function UI:new()
     self.skipScenes = false
 
     setupDisplay(self)
-    playStory = 1
+    playStory = 0
 end
 
 function UI:update(dt)
@@ -247,6 +248,12 @@ function UI:update(dt)
             if playStory == 4 then
                 enemy.dead = true
                 map.currentRoom = Room(0, 0, 0, {})
+                player.health = player.maxHealth
+
+                for _, button in ipairs(map.currentRoom.buttons) do
+                    button.visible = true
+                end
+
                 currentLevel = 0
             end
         end

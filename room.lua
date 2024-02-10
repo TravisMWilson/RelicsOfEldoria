@@ -39,13 +39,13 @@ local ROOM_BUTTONS = {
     chest = { Button(
         (love.graphics:getWidth() / 2) - 170,
         (love.graphics:getHeight() * 0.8) - 325,
-        "Assets/Chest" .. math.random(1, NUM_CHEST_IMAGES) .. "a.png",
+        "Assets/Chest" .. love.math.random(1, NUM_CHEST_IMAGES) .. "a.png",
         Map.openChest
     ) },
     key = { Button(
         (love.graphics:getWidth() / 2) - 35,
         love.graphics:getHeight() * 0.8,
-        "Assets/Key" .. math.random(1, NUM_KEY_IMAGES) .. ".png",
+        "Assets/Key" .. love.math.random(1, NUM_KEY_IMAGES) .. ".png",
         Player.addKey
     ) },
     health = { Button(
@@ -58,6 +58,12 @@ local ROOM_BUTTONS = {
         (love.graphics:getWidth() / 2) - 175,
         (love.graphics:getHeight() * 0.8) - 465,
         "Assets/TeleportShrineA.png", 
+        Player.addTeleport
+    ) },
+    townTeleport = { Button(
+        133,
+        218,
+        "Assets/TownTeleport.png", 
         Player.addTeleport
     ) },
     potion = { Button(
@@ -185,6 +191,8 @@ local function getButtons(self)
         return ROOM_BUTTONS.teleport
     elseif self.type == ROOM_TYPES.potion then
         return ROOM_BUTTONS.potion
+    elseif currentLevel == 0 then
+        return ROOM_BUTTONS.townTeleport
     else
         return {}
     end

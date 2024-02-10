@@ -21,11 +21,6 @@ function Inventory:new()
 
     self.items = {}
     table.insert(self.items, InventoryItem("Dagger", 1, 1))
-    table.insert(self.items, InventoryItem("Sword", 1, 1))
-    table.insert(self.items, InventoryItem("Staff", 1, 1))
-    table.insert(self.items, InventoryItem("Spear", 1, 1))
-    table.insert(self.items, InventoryItem("Hammer", 1, 1))
-    table.insert(self.items, InventoryItem("Axe", 1, 1))
     self.items[1].selected = true
 
     self.maxItems = 20
@@ -34,6 +29,15 @@ function Inventory:new()
     self.indexToDelete = 0
     self.isDeleteSelected = false
     self.nextWeaponIndex = nil
+
+    self.showIcon = nil
+    self.showLevel = 0
+    self.rays = Particles(750, 375, 5, 1.5, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1.5, 0, "Assets/ray.png")
+    self.rays:setColor(0, 0, 0, 0, 0, 0, 0, 0.9, 0, 0, 0, 0)
+    self.rayBackground = Particles(750, 375, 30, 2, 50, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1.8, -200, "Assets/WhiteCloud.png")
+    self.rayBackground:setColor(167/255, 98/255, 255/255, 0, 22/255, 252/255, 62/255, 0.9, 255/255, 46/255, 247/255, 0)
+    self.showRays = false
+    self.rayTimer = 0
 end
 
 function Inventory:update(dt)
@@ -62,7 +66,28 @@ function Inventory:update(dt)
                 table.remove(player.inventory.items, self.indexToDelete)
 
                 if self.isDeleteSelected then
-                    player.inventory.items[self.nextWeaponIndex].selected = true
+                    local item = player.inventory.items[self.nextWeaponIndex]
+                    item.selected = true
+
+                    player.image = love.graphics.newImage("Assets/" .. item.type .. item.code .. ".png")
+                    player.width = player.image:getWidth()
+                    player.height = player.image:getHeight()
+                    player.weaponLevel = item.level
+        
+                    if item.type == "Staff" or item.type == "Spear" then
+                        player.defaultPosition = {
+                            x = (love.graphics.getWidth() * 0.75) - (player.width * 0.75),
+                            y = love.graphics.getHeight() - (player.height * 0.65)
+                        }
+                    else
+                        player.defaultPosition = {
+                            x = (love.graphics.getWidth() * 0.75) - (player.width * 0.75),
+                            y = love.graphics.getHeight() - (player.height * 0.8)
+                        }
+                    end
+        
+                    player.x = player.defaultPosition.x
+                    player.y = player.defaultPosition.y
                 end
                 
                 music:play(music.sfx.deleteItemSFX)
@@ -72,6 +97,18 @@ function Inventory:update(dt)
 
             self.confirmPopup.answer = false
             self.confirmPopup.visible = false
+        end
+    end
+
+    if self.showRays then
+        self.rayTimer = self.rayTimer + dt
+
+        self.rayBackground:update(dt)
+        self.rays:update(dt)
+
+        if self.rayTimer > 3 then
+            self.rayTimer = 0
+            self.showRays = false
         end
     end
 end
@@ -91,6 +128,29 @@ function Inventory:draw()
         resetFont()
         
         self.confirmPopup:draw()
+    end
+
+    if self.showRays then
+        self.rayBackground:draw()
+        self.rays:draw()
+
+        local scale = 0.85
+        local iconWidth = self.showIcon:getWidth() * scale
+        local iconHeight = self.showIcon:getHeight() * scale
+        local iconX = (love.graphics:getWidth() / 2) - (iconWidth / 2)
+        local iconY = (love.graphics:getHeight() / 2) - (iconHeight / 2)
+
+        love.graphics.draw(self.showIcon, iconX, iconY, 0, scale, scale)
+
+        setColor(0, 0, 0, 1)
+        setFont(80)
+        love.graphics.print(
+            tostring(self.showLevel),
+            iconX - love.graphics.getFont():getWidth(tostring(self.showLevel)),
+            (love.graphics:getHeight() / 2)
+        )
+        resetFont()
+        resetColor()
     end
 end
 
@@ -127,18 +187,22 @@ end
 
 function Inventory:giveRandomWeapon(minLevel, maxLevel)
     if #player.inventory.items < player.inventory.maxItems then
-        local weaponType = WEAPON_TYPES[math.random(1 ,6)]
-        local weaponCode = math.random(1, WEAPON_TYPE_QUANTITIES[weaponType])
-        local weaponLevel = math.random(minLevel, maxLevel)
+        local weaponType = WEAPON_TYPES[love.math.random(1, 6)]
+        local weaponCode = love.math.random(1, WEAPON_TYPE_QUANTITIES[weaponType])
+        local weaponLevel = love.math.random(minLevel, maxLevel)
 
         table.insert(player.inventory.items, InventoryItem(weaponType, weaponCode, weaponLevel))
 
+        player.inventory.showIcon = love.graphics.newImage("Assets/" .. weaponType ..tostring(weaponCode) .. ".png")
+        player.inventory.showLevel = weaponLevel
+        player.inventory.showRays = true
+
         if #player.inventory.items == 20 then
-            music:play(music.sfx.inventoryFullVoiceSFX)
+            music.sfx.inventoryFullVoiceSFX:play()
         elseif #player.inventory.items >= 17 then
-            music:play(music.sfx.inventoryGettingFullVoiceSFX)
+            music.sfx.inventoryGettingFullVoiceSFX:play()
         end
     else
-        music:play(music.sfx.inventoryFullVoiceSFX)
+        music.sfx.inventoryFullVoiceSFX:play()
     end
 end
