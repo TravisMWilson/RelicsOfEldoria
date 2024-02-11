@@ -261,7 +261,7 @@ function UI:new()
     self.skipScenes = false
 
     setupDisplay(self)
-    playStory = 0
+    playStory = 1
 end
 
 function UI:update(dt)
@@ -293,7 +293,7 @@ function UI:update(dt)
                 playStoryPart = playStoryPart + 1
                 playingStory = false
 
-                if (playStory == 1 and playStoryPart >= 7)
+                if (playStory == 1 and playStoryPart >= 8)
                 or (playStory == 2 and playStoryPart >= 3)
                 or (playStory == 3 and playStoryPart >= 3)
                 or (playStory == 4 and playStoryPart >= 5) then
@@ -363,6 +363,10 @@ function UI:draw()
     
     for _, instance in ipairs(textInstances) do
         instance:draw()
+    end
+
+    if player.playingTutorial then
+        love.graphics.draw(love.graphics.newImage("Assets/Tutorial" .. player.tutorialNumber .. ".png"))
     end
 end
 

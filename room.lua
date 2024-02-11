@@ -60,12 +60,20 @@ local ROOM_BUTTONS = {
         "Assets/TeleportShrineA.png", 
         Player.addTeleport
     ) },
-    townTeleport = { Button(
-        133,
-        218,
-        "Assets/TownTeleport.png", 
-        Player.addTeleport
-    ) },
+    town = {
+        Button(
+            133,
+            218,
+            "Assets/TownTeleport.png", 
+            Player.addTeleport
+        ),
+        Button(
+            love.graphics:getWidth() - 44,
+            20,
+            "Assets/TutorialButton.png",
+            Player.playTutorial
+        )
+    },
     potion = { Button(
         (love.graphics:getWidth() / 2) - 35,
         (love.graphics:getHeight() * 0.8) - 110,
@@ -77,7 +85,8 @@ local ROOM_BUTTONS = {
         (love.graphics:getHeight() * 0.8) - 270,
         "Assets/Relic.png",
         Player.addRelic
-    ) }
+    ) },
+    tutorial = {  }
 }
 
 local function getDoors(self)
@@ -192,7 +201,7 @@ local function getButtons(self)
     elseif self.type == ROOM_TYPES.potion then
         return ROOM_BUTTONS.potion
     elseif currentLevel == 0 then
-        return ROOM_BUTTONS.townTeleport
+        return ROOM_BUTTONS.town
     else
         return {}
     end

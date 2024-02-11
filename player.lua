@@ -11,6 +11,13 @@ local attackDelayTimer = 0
 local deathDelayTimer = 0
 local waypointScrollOffset = 0
 
+function attackBlocked()
+    local pa = playerAttack
+    local ea = enemyAttack
+
+    return enemy:attacking() and player:attacking() and checkLineCollision(pa.x1, pa.y1, pa.x2, pa.y2, ea.x1, ea.y1, ea.x2, ea.y2)
+end
+
 local function reset(self)
     self.health = self.maxHealth
     map.currentRoom = Room(0, 0, 0, {})
@@ -22,6 +29,7 @@ local function reset(self)
     currentLevel = 0
     deathDelayTimer = 0
     self.dead = false
+    self.deaths = self.deaths + 1
 end
 
 local function handleDeath(self, dt)
@@ -45,13 +53,6 @@ local function handleDeath(self, dt)
             reset(self)
         end
     end
-end
-
-function attackBlocked()
-    local pa = playerAttack
-    local ea = enemyAttack
-
-    return enemy:attacking() and player:attacking() and checkLineCollision(pa.x1, pa.y1, pa.x2, pa.y2, ea.x1, ea.y1, ea.x2, ea.y2)
 end
 
 local function moveSword(self)
@@ -87,32 +88,35 @@ function Player:new()
     self.x = self.defaultPosition.x
     self.y = self.defaultPosition.y
 
+    self.tutorialNumber = 0
+    self.enemiesKilled = 0
     self.healthPotions = 3
+    self.chestsLooted = 0
     self.weaponLevel = 1
     self.attackSpeed = 0
     self.playerTimer = 0
     self.maxHealth = 200
+    self.totalGold = 0
     self.damage = 0
     self.relics = 0
+    self.deaths = 0
     self.level = 1
     self.gold = 0
     self.exp = 0
+    
+    self.expNeeded = self.level * 100
+    self.gameStartedTime = os.time()
+    self.health = self.maxHealth
+
+    self.inventory = Inventory()
+    self.statsMenu = StatsMenu()
 
     self.waypoints = { 0 }
     self.waypointDisplay = {}
     self.bossesDead = {}
 
-    self.expNeeded = self.level * 100
-    self.health = self.maxHealth
-
-    self.inventory = Inventory()
-    self.statsMenu = StatsMenu()
+    self.playingTutorial = false
     self.dead = false
-    
-    self.gameStartedTime = os.time()
-    self.enemiesKilled = 0
-    self.chestsLooted = 0
-    self.totalGold = 0
 end
 
 function Player:update(dt)
@@ -241,6 +245,17 @@ function Player:mousepressed(x, y, button, istouch, presses)
                     clickArea.action()
                 end
             end
+        end
+    end
+
+    if button == 1 and self.playingTutorial then
+        self.tutorialNumber = self.tutorialNumber + 1
+
+        if self.tutorialNumber == 35 then
+            self.playingTutorial = false
+            self.tutorialNumber = 0
+        else
+            love.audio.newSource("SFX/Tutorial" .. self.tutorialNumber .. "Voice.wav", "static"):play()
         end
     end
 end
@@ -419,4 +434,9 @@ function Player:openStats()
     else
         music:play(music.sfx.skillCloseSFX)
     end
+end
+
+function Player:playTutorial()
+    player.playingTutorial = true
+    love.audio.newSource("SFX/Tutorial0Voice.wav", "static"):play()
 end

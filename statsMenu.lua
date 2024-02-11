@@ -25,7 +25,8 @@ function StatsMenu:draw()
                     .. "- Killed " .. player.enemiesKilled .. " creatures\n"
                     .. "- Looted " .. player.chestsLooted .. " chests\n"
                     .. "- Gained a total of " .. player.totalGold .. " gold\n"
-                    .. "... but only have " .. player.gold .. " left, how sad..."
+                    .. "... but only have " .. player.gold .. " left, how sad...\n"
+                    .. "- Died " .. player.deaths .. " times..."
 
         self.characterCount = self.characterCount + 1
 
@@ -35,8 +36,8 @@ function StatsMenu:draw()
         setFont(20, "Assets/segoeprb.ttf")
         love.graphics.print(
             string.sub(text, 1, self.characterCount),
-            self.x + 150,
-            self.y + 225
+            self.x + 170,
+            self.y + 220
         )
         resetFont()
         resetColor()
