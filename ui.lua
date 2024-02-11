@@ -1,5 +1,7 @@
 UI = Object:extend()
 
+textInstances = {}
+
 playStory = 0
 
 local DISTANCE_INCREMENT = 80
@@ -20,6 +22,34 @@ local playStoryPart = 1
 local storyOffsetX = 0
 local storyOffsetY = 0
 local storyLogoAlpha = 5
+
+local currentColor = { r = 255/255, g = 255/255, b = 255/255, a = 255/255 }
+local currentFont = love.graphics.getFont()
+
+function setColor(r, g, b, a)
+    currentColor.r, currentColor.g, currentColor.b, currentColor.a = love.graphics.getColor()
+    love.graphics.setColor(r, g, b, a)
+end
+
+function resetColor()
+    love.graphics.setColor(currentColor.r, currentColor.g, currentColor.b, currentColor.a)
+end
+
+function setFont(scale, ...)
+    local otherFont = {...}
+
+    currentFont = love.graphics.getFont()
+
+    if #otherFont == 0 then
+        love.graphics.setFont(love.graphics.newFont("Assets/Candarab.ttf", scale))
+    else
+        love.graphics.setFont(love.graphics.newFont(otherFont[1], scale))
+    end
+end
+
+function resetFont()
+    love.graphics.setFont(currentFont)
+end
 
 local function setupDisplay(self)
     local frameSize = 132
@@ -275,6 +305,14 @@ function UI:update(dt)
             end
         end
     end
+    
+    for i = #textInstances, 1, -1 do
+        textInstances[i]:update(dt)
+
+        if textInstances[i].remove then
+            table.remove(textInstances, i)
+        end
+    end
 end
 
 function UI:draw()
@@ -321,6 +359,10 @@ function UI:draw()
         end
 
         love.graphics.draw(self.images.storyScene3, storyOffsetX, storyOffsetY)
+    end
+    
+    for _, instance in ipairs(textInstances) do
+        instance:draw()
     end
 end
 

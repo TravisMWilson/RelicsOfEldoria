@@ -2,12 +2,13 @@
     todo list:
 
     - need a tutorial
-    - bosses need special attacks
     - need to add a save/load
 ]]
 
 function love.load()
     Object = require "classic"
+    require "blockAttack"
+    require "circleAttack"
     require "particles"
     require "button"
     require "waypoint"
@@ -38,7 +39,6 @@ function love.draw()
     enemy:draw()
     player:draw()
     ui:draw()
-    drawText()
 end
 
 function love.update(dt)
@@ -47,7 +47,6 @@ function love.update(dt)
     player:update(dt)
     enemy:update(dt)
     ui:update(dt)
-    updateText(dt)
 end
 
 function love.mousepressed(x, y, button, istouch, presses)

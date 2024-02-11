@@ -248,6 +248,8 @@ function Map:generate(seed)
             map.dungeonMap[newCol][newRow] = ROOM_TYPES.chest
         elseif love.math.random(1, 100) == ROOM_TYPES.key then
             map.dungeonMap[newCol][newRow] = ROOM_TYPES.key
+        elseif love.math.random(1, 100) == ROOM_TYPES.potion then
+            map.dungeonMap[newCol][newRow] = ROOM_TYPES.potion
         elseif love.math.random(1, 100) == ROOM_TYPES.health then
             map.dungeonMap[newCol][newRow] = ROOM_TYPES.health
         elseif love.math.random(1, 100) == ROOM_TYPES.teleport and not hasteleportRoom then

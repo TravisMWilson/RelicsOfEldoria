@@ -32,6 +32,8 @@ local function handleDeath(self, dt)
     if self.dead then
         if deathDelayTimer == 0 then
             enemy.dead = true
+            enemy.circleAttacks = {}
+            enemy.blockAttacks = {}
             music:play(music.sfx.deathLaughterSFX)
             music:play(music.sfx.deathSFX)
             map.showMap = false
@@ -98,6 +100,7 @@ function Player:new()
 
     self.waypoints = { 0 }
     self.waypointDisplay = {}
+    self.bossesDead = {}
 
     self.expNeeded = self.level * 100
     self.health = self.maxHealth
@@ -182,11 +185,11 @@ function Player:playerAttackHandler()
             if attackDelayTimer >= self.attackSpeed then
                 if attackBlocked() then
                     enemy.enemyTimer = -0.25
-                    displayText("BLOCKED", 200, 40, 2, { r = 255/255, g = 0, b = 0, a = 255/255 })
+                    table.insert(textInstances, DisplayText("BLOCKED", 200, 40, 2, { r = 255/255, g = 0, b = 0, a = 255/255 }))
                     music:play(music.sfx.blockSFX)
                 elseif lineRectCollision(playerAttack.x1, playerAttack.y1, playerAttack.x2, playerAttack.y2, enemy.x, enemy.y, enemy.width, enemy.height) then
                     enemy.health = enemy.health - player.damage >= 0 and enemy.health - player.damage or 0
-                    displayText(player.damage, 200, 40, 2, { r = 255/255, g = 0, b = 0, a = 255/255 })
+                    table.insert(textInstances, DisplayText(player.damage, 200, 40, 2, { r = 255/255, g = 0, b = 0, a = 255/255 }))
                     music:play(music.sfx.swordSwingSFX)
                     music:play(music.sfx.playerHitEnemySFX)
 
@@ -298,6 +301,7 @@ end
 function Player:addPotion()
     player.healthPotions = player.healthPotions + 1
     music:play(music.sfx.pickupPotionSFX)
+    map.currentRoom.buttons = {}
 end
 
 function Player:addRelic()

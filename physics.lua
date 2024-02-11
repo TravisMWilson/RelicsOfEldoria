@@ -57,3 +57,36 @@ end
 function pointRectCollision(x, y, rect)
     return x >= rect.x and x <= rect.x + rect.width and y >= rect.y and y <= rect.y + rect.height
 end
+
+function pointCircleCollision(px, py, cx, cy, radius)
+    local dx = px - cx
+    local dy = py - cy
+    local distanceSquared = dx * dx + dy * dy
+    local radiusSquared = radius * radius
+
+    return distanceSquared <= radiusSquared
+end
+
+function distanceSquared(x1, y1, x2, y2)
+    return (x2 - x1)^2 + (y2 - y1)^2
+end
+
+function pointLineDistance(x, y, x1, y1, x2, y2)
+    local dx, dy = x2 - x1, y2 - y1
+    local d = dx * dx + dy * dy
+    local t = ((x - x1) * dx + (y - y1) * dy) / d
+
+    if t < 0 then
+        return distanceSquared(x, y, x1, y1)
+    elseif t > 1 then
+        return distanceSquared(x, y, x2, y2)
+    else
+        local px, py = x1 + t * dx, y1 + t * dy
+        return distanceSquared(x, y, px, py)
+    end
+end
+
+function lineCircleCollision(x1, y1, x2, y2, cx, cy, radius)
+    local d = pointLineDistance(cx, cy, x1, y1, x2, y2)
+    return d <= radius * radius
+end

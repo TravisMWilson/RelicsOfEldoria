@@ -1,84 +1,42 @@
-textInstances = {}
-textTimer = 0
+DisplayText = Object:extend()
 
-currentColor = { r = 255/255, g = 255/255, b = 255/255, a = 255/255 }
-currentFont = love.graphics.getFont()
-
-function setColor(r, g, b, a)
-    currentColor.r, currentColor.g, currentColor.b, currentColor.a = love.graphics.getColor()
-    love.graphics.setColor(r, g, b, a)
+function DisplayText:new(message, maxScale, scaleSpeed, displayTime, color)
+    self.message = message
+    self.x = (love.graphics.getWidth() / 2) + love.math.random(-100, 100)
+    self.y = (love.graphics.getHeight() / 2) + love.math.random(-100, 100)
+    self.scale = 1
+    self.maxScale = maxScale
+    self.scaleSpeed = scaleSpeed
+    self.displayTime = displayTime
+    self.color = color
+    self.timer = 0
+    self.remove = false
+    self.timer = 0
 end
 
-function resetColor()
-    love.graphics.setColor(currentColor.r, currentColor.g, currentColor.b, currentColor.a)
-end
+function DisplayText:update(dt)
+    self.timer = self.timer + dt
 
-function setFont(scale, ...)
-    local otherFont = {...}
+    if self.scale < self.maxScale and self.timer <= self.displayTime / 2 then
+        self.scale = self.scale + self.scaleSpeed * dt
+    end
 
-    currentFont = love.graphics.getFont()
+    if self.scale > 1 and self.timer > self.displayTime / 2 then
+        self.scale = self.scale - self.scaleSpeed * dt
+    end
 
-    if #otherFont == 0 then
-        love.graphics.setFont(love.graphics.newFont("Assets/Candarab.ttf", scale))
-    else
-        love.graphics.setFont(love.graphics.newFont(otherFont[1], scale))
+    if self.scale <= 1 then
+        self.remove = true
     end
 end
 
-function resetFont()
-    love.graphics.setFont(currentFont)
-end
+function DisplayText:draw()
+    local x = self.x - love.graphics.getFont():getWidth(self.message) / 2
+    local y = self.y - love.graphics.getFont():getHeight() / 2
 
-function displayText(message, maxScale, scaleSpeed, displayTime, color)
-    table.insert(textInstances, {
-        message = message,
-        x = (love.graphics.getWidth() / 2) + math.random(-100, 100),
-        y = (love.graphics.getHeight() / 2) + math.random(-100, 100),
-        scale = 1,
-        maxScale = maxScale,
-        scaleSpeed = scaleSpeed,
-        displayTime = displayTime,
-        color = color,
-        timer = 0,
-        remove = false
-    })
-end
-
-function updateText(dt)
-    for i = #textInstances, 1, -1 do
-        local instance = textInstances[i]
-        instance.timer = instance.timer + dt
-
-        if instance.scale < instance.maxScale and instance.timer <= instance.displayTime / 2 then
-            instance.scale = instance.scale + instance.scaleSpeed * dt
-        end
-
-        if instance.scale > 1 and instance.timer > instance.displayTime / 2 then
-            instance.scale = instance.scale - instance.scaleSpeed * dt
-        end
-
-        if instance.scale <= 1 then
-            instance.remove = true
-        end
-    end
-
-    for i = #textInstances, 1, -1 do
-        if textInstances[i].remove then
-            table.remove(textInstances, i)
-        end
-    end
-end
-
-function drawText()
-    for _, instance in ipairs(textInstances) do
-        local x = instance.x - love.graphics.getFont():getWidth(instance.message) / 2
-        local y = instance.y - love.graphics.getFont():getHeight() / 2
-
-        setColor(instance.color.r, instance.color.g, instance.color.b, instance.color.a)
-        setFont(instance.scale)
-        love.graphics.print(instance.message, x, y)
-        resetFont()
-        resetColor()
-        love.graphics.origin()
-    end
+    setColor(self.color.r, self.color.g, self.color.b, self.color.a)
+    setFont(self.scale)
+    love.graphics.print(self.message, x, y)
+    resetFont()
+    resetColor()
 end
