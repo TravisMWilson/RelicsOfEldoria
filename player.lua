@@ -270,13 +270,7 @@ function Player:keypressed(key)
     if key == "h" and self.healthPotions > 0 then
         self:useHealthPotion()
     elseif key == "escape" then
-        if #self.waypointDisplay > 0 then
-            self.waypointDisplay = {}
-        else
-            ui.skipScenes = true
-        end
-    elseif key == "n" then
-        player.inventory:giveRandomWeapon(1, 1000)
+        ui.skipScenes = true
     end
 end
 
@@ -421,6 +415,11 @@ function Player:openInventory()
     if player.inventory.open then
         music:play(music.sfx.bagOpenSFX)
     else
+        if player.inventory.sellingMode then
+            player.inventory.sellingMode = false
+            music.sfx.merchantPartingSFX:play()
+        end
+
         music:play(music.sfx.bagCloseSFX)
     end
 end
@@ -439,4 +438,12 @@ end
 function Player:playTutorial()
     player.playingTutorial = true
     love.audio.newSource("SFX/Tutorial0Voice.wav", "static"):play()
+end
+
+function Player:openShop()
+    if not player.inventory.sellingMode then
+        player.inventory.sellingMode = true
+        player.inventory.open = true
+        music.sfx.merchantGreetingSFX:play()
+    end
 end

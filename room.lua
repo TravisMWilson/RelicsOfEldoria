@@ -11,7 +11,8 @@ ROOM_TYPES = {
     key = 6,
     health = 7,
     teleport = 8,
-    potion = 9
+    potion = 9,
+    merchant = 10
 }
 
 local NUM_KEY_IMAGES = 4
@@ -86,7 +87,12 @@ local ROOM_BUTTONS = {
         "Assets/Relic.png",
         Player.addRelic
     ) },
-    tutorial = {  }
+    merchant = { Button(
+        (love.graphics:getWidth() / 2) - 238,
+        (love.graphics:getHeight() * 0.8) - 500,
+        "Assets/Merchant.png",
+        Player.openShop
+    ) }
 }
 
 local function getDoors(self)
@@ -198,6 +204,8 @@ local function getButtons(self)
         return ROOM_BUTTONS.health
     elseif self.type == ROOM_TYPES.teleport then
         return ROOM_BUTTONS.teleport
+    elseif self.type == ROOM_TYPES.merchant then
+        return ROOM_BUTTONS.merchant
     elseif self.type == ROOM_TYPES.potion then
         return ROOM_BUTTONS.potion
     elseif currentLevel == 0 then

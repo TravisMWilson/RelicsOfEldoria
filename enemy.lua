@@ -432,7 +432,7 @@ function Enemy:specialAttack()
             end
         elseif chosenSpecialAttack == 4 then
             local opening = {
-                width = love.math.random(30, 100),
+                width = love.math.random(50, 200),
                 side = love.math.random(1, 4),
                 x = 0,
                 y = 0

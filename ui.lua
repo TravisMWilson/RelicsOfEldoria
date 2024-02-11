@@ -133,28 +133,32 @@ local function drawDisplay()
 
     setColor(255/255, 255/255, 255/255, 255/255)
     love.graphics.draw(healthBar.image, healthBar.x, healthBar.y)
-    love.graphics.draw(healthPotionUI.image, healthPotionUI.x, healthPotionUI.y)
-    love.graphics.draw(relicUI.image, relicUI.x, relicUI.y)
-    resetColor()
 
-    setColor(14/255, 171/255, 66/255, 255/255)
-    setFont(25)
-    love.graphics.print(
-        tostring(player.healthPotions),
-        (healthPotionUI.x - 15) - love.graphics.getFont():getWidth(player.healthPotions),
-        (love.graphics:getHeight() - 20) - love.graphics.getFont():getHeight()
-    )
-    resetFont()
-    resetColor()
+    if not player.inventory.sellingMode then
+        love.graphics.draw(healthPotionUI.image, healthPotionUI.x, healthPotionUI.y)
+        love.graphics.draw(relicUI.image, relicUI.x, relicUI.y)
+        resetColor()
 
-    setColor(246/255, 55/255, 53/255, 255/255)
-    setFont(25)
-    love.graphics.print(
-        tostring(player.relics),
-        (relicUI.x - 15) - love.graphics.getFont():getWidth(player.relics),
-        (love.graphics:getHeight() - 40) - healthPotionUI.height - love.graphics.getFont():getHeight()
-    )
-    resetFont()
+        setColor(14/255, 171/255, 66/255, 255/255)
+        setFont(25)
+        love.graphics.print(
+            tostring(player.healthPotions),
+            (healthPotionUI.x - 15) - love.graphics.getFont():getWidth(player.healthPotions),
+            (love.graphics:getHeight() - 20) - love.graphics.getFont():getHeight()
+        )
+        resetFont()
+        resetColor()
+
+        setColor(246/255, 55/255, 53/255, 255/255)
+        setFont(25)
+        love.graphics.print(
+            tostring(player.relics),
+            (relicUI.x - 15) - love.graphics.getFont():getWidth(player.relics),
+            (love.graphics:getHeight() - 40) - healthPotionUI.height - love.graphics.getFont():getHeight()
+        )
+        resetFont()
+    end
+    
     resetColor()
 end
 
@@ -233,18 +237,22 @@ function UI:new()
     self.images.playerHealthBar = love.graphics.newImage("Assets/PlayerHealthBar.png")
     self.images.inventoryButton = love.graphics.newImage("Assets/InventoryButton.png")
     self.images.healthPotionUI = love.graphics.newImage("Assets/HealthPotion_UI.png")
+    self.images.merchantCorner = love.graphics.newImage("Assets/MerchantCorner.png")
     self.images.enemyHealthBar = love.graphics.newImage("Assets/EnemyHealthBar.png")
     self.images.inventoryTitle = love.graphics.newImage("Assets/InventoryTitle.png")
+    self.images.shopBackground = love.graphics.newImage("Assets/ShopBackground.png")
     self.images.itemBackgound = love.graphics.newImage("Assets/ItemBackground.png")
+    self.images.shopItemFrame = love.graphics.newImage("Assets/ShopItemFrame.png")
     self.images.confirmPopup = love.graphics.newImage("Assets/ConfirmPopup.png")
     self.images.deleteButton = love.graphics.newImage("Assets/DeleteButton.png")
     self.images.statsButton = love.graphics.newImage("Assets/StatsButton.png")
     self.images.equipButton = love.graphics.newImage("Assets/EquipButton.png")
     self.images.waypointUI = love.graphics.newImage("Assets/WaypointUI.png")
     self.images.scrollMenu = love.graphics.newImage("Assets/ScrollMenu.png")
+    self.images.shopTitle = love.graphics.newImage("Assets/ShopTitle.png")
     self.images.relicUI = love.graphics.newImage("Assets/RelicUI.png")
     self.images.death = love.graphics.newImage("Assets/Death.png")
-        
+    
     self.images.storyScene1Logo = love.graphics.newImage("Assets/StoryScene1.png")
     self.images.storyScene1 = love.graphics.newImage("Assets/StoryScene1.jpg")
     self.images.storyScene2 = love.graphics.newImage("Assets/StoryScene2.jpg")

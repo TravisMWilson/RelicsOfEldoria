@@ -1,10 +1,3 @@
---[[
-    todo list:
-
-    - need a tutorial
-    - need to add a save/load
-]]
-
 function love.load()
     Object = require "classic"
     require "blockAttack"
@@ -26,6 +19,7 @@ function love.load()
     require "ui"
     require "inventory"
     require "inventoryItem"
+    require "shopItem"
 
     music = Music()
     ui = UI()

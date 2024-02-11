@@ -8,6 +8,8 @@ function InventoryItem:new(type, code, level)
 
     self.deleteButton = Button(0, 0, "Assets/DeleteButton.png", InventoryItem.deleteItem)
     self.deleteButton.visible = true
+    self.sellButton = Button(0, 0, "Assets/SellButton.png", InventoryItem.sellItem)
+    self.sellButton.visible = true
 
     self.type = type
     self.code = code
@@ -35,8 +37,13 @@ function InventoryItem:update(dt)
         self.equipButton.y = ((self.y + self.height) - (self.equipButton.height * 2)) - 30
     end
 
-    self.deleteButton.x = ((self.x + self.width) - self.deleteButton.width) - 15
-    self.deleteButton.y = ((self.y + self.height) - self.deleteButton.height) - 20
+    if player.inventory.sellingMode then
+        self.sellButton.x = ((self.x + self.width) - self.sellButton.width) - 15
+        self.sellButton.y = ((self.y + self.height) - self.sellButton.height) - 20
+    else
+        self.deleteButton.x = ((self.x + self.width) - self.deleteButton.width) - 15
+        self.deleteButton.y = ((self.y + self.height) - self.deleteButton.height) - 20
+    end
 end
 
 function InventoryItem:draw()
@@ -75,7 +82,11 @@ function InventoryItem:draw()
     resetFont()
     resetColor()
 
-    self.deleteButton:draw()
+    if player.inventory.sellingMode then
+        self.sellButton:draw()
+    else
+        self.deleteButton:draw()
+    end
 
     if self.type ~= "Key" then
         self.equipButton:draw()
@@ -87,7 +98,11 @@ function InventoryItem:mousepressed(x, y, button, istouch, presses)
         self.equipButton:mousepressed(x, y, button, istouch, presses)
     end
 
-    self.deleteButton:mousepressed(x, y, button, istouch, presses)
+    if player.inventory.sellingMode then
+        self.sellButton:mousepressed(x, y, button, istouch, presses)
+    else
+        self.deleteButton:mousepressed(x, y, button, istouch, presses)
+    end
 end
 
 function InventoryItem:deleteItem()
@@ -163,5 +178,47 @@ function InventoryItem:equipItem()
             player.x = player.defaultPosition.x
             player.y = player.defaultPosition.y
         end
+    end
+end
+
+function InventoryItem:sellItem()
+    if #player.inventory.items > 1 then
+        local isWeapon = false
+        local totalWeapons = 0
+
+        player.inventory.isDeleteSelected = false
+        player.inventory.indexToDelete = 0
+        player.inventory.nextWeaponIndex = 0
+
+        for i, item in ipairs(player.inventory.items) do
+            if pointRectCollision(love.mouse:getX(), love.mouse:getY(), item) then
+                if item.selected then
+                    player.inventory.isDeleteSelected = true
+                end
+
+                if item.type ~= "Key" then
+                    totalWeapons = totalWeapons + 1
+                end
+
+                player.inventory.indexToDelete = i
+            elseif item.type ~= "Key" then
+                totalWeapons = totalWeapons + 1
+
+                if i ~= 1 then
+                    player.inventory.nextWeaponIndex = i - 1
+                else
+                    player.inventory.nextWeaponIndex = i
+                end
+            end
+        end
+
+        if (isWeapon and totalWeapons > 1) or not isWeapon then
+            player.inventory.confirmPopup.visible = true
+            music:play(music.sfx.buttonPressSFX)
+        else
+            music.sfx.cantSellVoiceSFX:play()
+        end
+    else
+        music.sfx.cantSellVoiceSFX:play()
     end
 end

@@ -101,23 +101,23 @@ local function roomIsClose(room1, room2)
 end
 
 local function setMapClickAreas()
-    if map.showMap then
-        local tileSize = 20
-        local originX = (love.graphics:getWidth() - 86) - (map.currentRoom.col * tileSize) - (tileSize * 1.5)
-        local originY = 92 - (map.currentRoom.row * tileSize) + (tileSize / 2)
+    if not map.showMap then return end
 
-        for i, row in ipairs(map.dungeonMap) do
-            for j, room in ipairs(row) do
-                if room ~= ROOM_TYPES.none then
-                    local roomX = originX + (j * tileSize)
-                    local roomY = originY + (i * tileSize)
+    local tileSize = 20
+    local originX = (love.graphics:getWidth() - 86) - (map.currentRoom.col * tileSize) - (tileSize * 1.5)
+    local originY = 92 - (map.currentRoom.row * tileSize) + (tileSize / 2)
 
-                    if room ~= map.currentRoom and room.discovered and roomIsClose(map.currentRoom, room) then
-                        if not room.searched then
-                            table.insert(map.currentRoom.clickAreas, ClickArea(roomX, roomY, tileSize - 2, tileSize - 2, "goToRoom", room))
-                        elseif room.searched then
-                            table.insert(map.currentRoom.clickAreas, ClickArea(roomX, roomY, tileSize - 2, tileSize - 2, "goToRoom", room))
-                        end
+    for i, row in ipairs(map.dungeonMap) do
+        for j, room in ipairs(row) do
+            if room ~= ROOM_TYPES.none then
+                local roomX = originX + (j * tileSize)
+                local roomY = originY + (i * tileSize)
+
+                if room ~= map.currentRoom and room.discovered and roomIsClose(map.currentRoom, room) then
+                    if not room.searched then
+                        table.insert(map.currentRoom.clickAreas, ClickArea(roomX, roomY, tileSize - 2, tileSize - 2, "goToRoom", room))
+                    elseif room.searched then
+                        table.insert(map.currentRoom.clickAreas, ClickArea(roomX, roomY, tileSize - 2, tileSize - 2, "goToRoom", room))
                     end
                 end
             end
@@ -220,7 +220,9 @@ function Map:generate(seed)
     map.dungeonMap = {}
 
     local maxRooms = love.math.random(15, map.maxRooms)
-    local hasteleportRoom = false
+    local hasTeleportRoom = false
+    local hasMerchantRoom = false
+    local hasHealingRoom = false
     local currentRooms = 0
 
     for i = 1, map.height do
@@ -244,20 +246,46 @@ function Map:generate(seed)
         local newRow = connectedEmptySpots[roomSpot][1]
         local newCol = connectedEmptySpots[roomSpot][2]
 
-        if love.math.random(1, 100) == ROOM_TYPES.chest then
-            map.dungeonMap[newCol][newRow] = ROOM_TYPES.chest
-        elseif love.math.random(1, 100) == ROOM_TYPES.key then
-            map.dungeonMap[newCol][newRow] = ROOM_TYPES.key
-        elseif love.math.random(1, 100) == ROOM_TYPES.potion then
-            map.dungeonMap[newCol][newRow] = ROOM_TYPES.potion
-        elseif love.math.random(1, 100) == ROOM_TYPES.health then
-            map.dungeonMap[newCol][newRow] = ROOM_TYPES.health
-        elseif love.math.random(1, 100) == ROOM_TYPES.teleport and not hasteleportRoom then
+        if love.math.random(1, 100) == ROOM_TYPES.teleport and not hasTeleportRoom then
             map.dungeonMap[newCol][newRow] = ROOM_TYPES.teleport
-            hasteleportRoom = true
-        else
-            map.dungeonMap[newCol][newRow] = roomType
+            hasTeleportRoom = true
+        elseif love.math.random(1, 100) == ROOM_TYPES.health and not hasHealingRoom then
+            map.dungeonMap[newCol][newRow] = ROOM_TYPES.health
+            hasHealingRoom = true
         end
+
+        love.math.setRandomSeed(os.time() + currentRooms)
+
+        if map.dungeonMap[newCol][newRow] ~= ROOM_TYPES.teleport and map.dungeonMap[newCol][newRow] ~= ROOM_TYPES.health then
+            if love.math.random(1, 40) == ROOM_TYPES.chest then
+                map.dungeonMap[newCol][newRow] = ROOM_TYPES.chest
+            elseif love.math.random(1, 30) == ROOM_TYPES.key then
+                map.dungeonMap[newCol][newRow] = ROOM_TYPES.key
+            elseif love.math.random(1, 20) == ROOM_TYPES.potion then
+                map.dungeonMap[newCol][newRow] = ROOM_TYPES.potion
+            elseif love.math.random(1, 10) == ROOM_TYPES.merchant and not hasMerchantRoom then
+                map.dungeonMap[newCol][newRow] = ROOM_TYPES.merchant
+                hasMerchantRoom = true
+
+                player.inventory.shopItems = {}
+
+                local numberOfShopItems = love.math.random(12, 24)
+            
+                if love.math.random(1, 10) == 1 then
+                    table.insert(player.inventory.shopItems, ShopItem("Potion", 0, 0))
+                end
+                print(numberOfShopItems)
+                for i = 1, numberOfShopItems do
+                    print("inserted " .. tostring(i))
+                    local type, code, level = player.inventory.getRandomWeapon(currentLevel, currentLevel + 10)
+                    table.insert(player.inventory.shopItems, ShopItem(type, code, level))
+                end
+            else
+                map.dungeonMap[newCol][newRow] = roomType
+            end
+        end
+
+        love.math.setRandomSeed(seed + currentRooms)
 
         currentRooms = currentRooms + 1
     end

@@ -1,6 +1,6 @@
 Inventory = Object:extend()
 
-local WEAPON_TYPES = { "Axe", "Dagger", "Hammer", "Spear", "Staff", "Sword" }
+local WEAPON_TYPES = { "Axe", "Dagger", "Hammer", "Spear", "Staff", "Sword", "Key" }
 
 local WEAPON_TYPE_QUANTITIES = {
     ["Axe"] = 15,
@@ -8,10 +8,81 @@ local WEAPON_TYPE_QUANTITIES = {
     ["Hammer"] = 10,
     ["Spear"] = 8,
     ["Staff"] = 34,
-    ["Sword"] = 47
+    ["Sword"] = 47,
+    ["Key"] = 4
 }
 
 local inventoryScrollOffset = 0
+local shopScrollOffset = 0
+
+local function updateConfirmPopup(self)
+    if self.confirmPopup.visible and self.confirmPopup.answer then
+        if self.confirmPopup.answer == "Yes" then
+            if not self.buying then
+                if self.sellingMode then
+                    player.gold = player.gold + math.floor(player.inventory.items[self.indexToDelete].level * 7.77)
+                    music:play(music.sfx.coinSellSFX)
+                else
+                    music:play(music.sfx.deleteItemSFX)
+                end
+
+                table.remove(player.inventory.items, self.indexToDelete)
+
+                if self.isDeleteSelected then
+                    local item = player.inventory.items[self.nextWeaponIndex]
+                    item.selected = true
+
+                    player.image = love.graphics.newImage("Assets/" .. item.type .. item.code .. ".png")
+                    player.width = player.image:getWidth()
+                    player.height = player.image:getHeight()
+                    player.weaponLevel = item.level
+        
+                    if item.type == "Staff" or item.type == "Spear" then
+                        player.defaultPosition = {
+                            x = (love.graphics.getWidth() * 0.75) - (player.width * 0.75),
+                            y = love.graphics.getHeight() - (player.height * 0.65)
+                        }
+                    else
+                        player.defaultPosition = {
+                            x = (love.graphics.getWidth() * 0.75) - (player.width * 0.75),
+                            y = love.graphics.getHeight() - (player.height * 0.8)
+                        }
+                    end
+        
+                    player.x = player.defaultPosition.x
+                    player.y = player.defaultPosition.y
+                end
+            else
+                if #self.items < self.maxItems then
+                    if self.buying then
+                        player.gold = player.gold + math.floor(self.buyingItem.level * 7.77)
+                        music:play(music.sfx.coinSellSFX)
+                    else
+                        if player.gold - math.floor(self.buyingItem.level * 33.33) >= 0 then
+                            player.gold = player.gold - math.floor(self.buyingItem.level * 33.33)
+                            music:play(music.sfx.coinSellSFX)
+
+                            if self.buyingItem.type == "Potion" then
+                                player.healthPotions = player.healthPotions + 1
+                            else
+                                table.insert(self.items, InventoryItem(self.buyingItem.type, self.buyingItem.code, self.buyingItem.level))
+                            end
+                        else
+                            music.sfx.notEnoughGoldSFX:play()
+                        end
+                    end
+                else
+                    music.sfx.alreadyFullSFX:play()
+                end
+            end
+        else
+            music:play(music.sfx.buttonPressSFX)
+        end
+
+        self.confirmPopup.answer = false
+        self.confirmPopup.visible = false
+    end
+end
 
 function Inventory:new()
     self.open = false
@@ -19,9 +90,15 @@ function Inventory:new()
     self.background = ui.images.inventoryBackground
     self.title = ui.images.inventoryTitle
 
+    self.merchantCorner = ui.images.merchantCorner
+    self.shopBackground = ui.images.shopBackground
+    self.shopTitle = ui.images.shopTitle
+
     self.items = {}
     table.insert(self.items, InventoryItem("Dagger", 1, 1))
     self.items[1].selected = true
+
+    self.shopItems = {}
 
     self.maxItems = 20
 
@@ -29,6 +106,9 @@ function Inventory:new()
     self.indexToDelete = 0
     self.isDeleteSelected = false
     self.nextWeaponIndex = nil
+    self.sellingMode = false
+    self.buyingItem = {}
+    self.buying = false
 
     self.showIcon = nil
     self.showLevel = 0
@@ -61,43 +141,21 @@ function Inventory:update(dt)
             item:update(dt)
         end
 
-        if self.confirmPopup.visible and self.confirmPopup.answer then
-            if self.confirmPopup.answer == "Yes" then
-                table.remove(player.inventory.items, self.indexToDelete)
-
-                if self.isDeleteSelected then
-                    local item = player.inventory.items[self.nextWeaponIndex]
-                    item.selected = true
-
-                    player.image = love.graphics.newImage("Assets/" .. item.type .. item.code .. ".png")
-                    player.width = player.image:getWidth()
-                    player.height = player.image:getHeight()
-                    player.weaponLevel = item.level
-        
-                    if item.type == "Staff" or item.type == "Spear" then
-                        player.defaultPosition = {
-                            x = (love.graphics.getWidth() * 0.75) - (player.width * 0.75),
-                            y = love.graphics.getHeight() - (player.height * 0.65)
-                        }
-                    else
-                        player.defaultPosition = {
-                            x = (love.graphics.getWidth() * 0.75) - (player.width * 0.75),
-                            y = love.graphics.getHeight() - (player.height * 0.8)
-                        }
-                    end
-        
-                    player.x = player.defaultPosition.x
-                    player.y = player.defaultPosition.y
-                end
-                
-                music:play(music.sfx.deleteItemSFX)
-            else
-                music:play(music.sfx.buttonPressSFX)
+        if self.sellingMode then
+            local offsetX = love.graphics:getWidth() - self.shopBackground:getWidth()
+            local offsetY = 58 + shopScrollOffset
+            local row = 0
+            local column = 0
+    
+            for i, item in ipairs(self.shopItems) do
+                item.x = offsetX
+                item.y = offsetY + ((i - 1) * item.height)
+    
+                item:update(dt)
             end
-
-            self.confirmPopup.answer = false
-            self.confirmPopup.visible = false
         end
+
+        updateConfirmPopup(self)
     end
 
     if self.showRays then
@@ -128,6 +186,21 @@ function Inventory:draw()
         resetFont()
         
         self.confirmPopup:draw()
+
+        if self.sellingMode then
+            love.graphics.draw(self.shopBackground, love.graphics:getWidth() - self.shopBackground:getWidth(), 0)
+            love.graphics.draw(self.merchantCorner, 0, love.graphics:getHeight() - self.merchantCorner:getHeight())
+
+            for _, item in ipairs(self.shopItems) do
+                item:draw()
+            end
+
+            love.graphics.draw(self.shopTitle, love.graphics:getWidth() - self.shopTitle:getWidth(), 0)
+
+            setFont(24)
+            love.graphics.print("MERCHANT", (love.graphics:getWidth() - (self.shopBackground:getWidth() / 2)) - (love.graphics.getFont():getWidth("MERCHANT") / 2), 18)
+            resetFont()
+        end
     end
 
     if self.showRays then
@@ -160,6 +233,12 @@ function Inventory:mousepressed(x, y, button, istouch, presses)
     for _, item in pairs(self.items) do
         item:mousepressed(x, y, button, istouch, presses)
     end
+
+    if self.sellingMode then
+        for _, item in pairs(self.shopItems) do
+            item:mousepressed(x, y, button, istouch, presses)
+        end
+    end
 end
 
 function Inventory:wheelmoved(x, y)
@@ -180,6 +259,23 @@ function Inventory:wheelmoved(x, y)
 
             if inventoryScrollOffset < maxHeight then
                 inventoryScrollOffset = maxHeight
+            end
+        end
+    end
+
+    if self.sellingMode then
+        local minX = love.graphics:getWidth() - self.shopBackground:getWidth()
+        local maxX = love.graphics:getWidth()
+    
+        if love.mouse.getX() > minX and love.mouse.getX() < maxX then
+            if y > 0 then
+                shopScrollOffset = shopScrollOffset + 20
+    
+                if shopScrollOffset > 0 then
+                    shopScrollOffset = 0
+                end
+            elseif y < 0 then
+                shopScrollOffset = shopScrollOffset - 20
             end
         end
     end
@@ -205,4 +301,12 @@ function Inventory:giveRandomWeapon(minLevel, maxLevel)
     else
         music.sfx.inventoryFullVoiceSFX:play()
     end
+end
+
+function Inventory:getRandomWeapon(minLevel, maxLevel)
+    local weaponType = WEAPON_TYPES[love.math.random(1, 6)]
+    local weaponCode = love.math.random(1, WEAPON_TYPE_QUANTITIES[weaponType])
+    local weaponLevel = love.math.random(minLevel, maxLevel)
+
+    return weaponType, weaponCode, weaponLevel
 end
