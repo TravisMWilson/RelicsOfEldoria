@@ -144,7 +144,7 @@ function Enemy:new()
         end
     end
 
-    if love.math.random(1, 300) == 1 and not bossAlreadyDead then
+    if love.math.random(1, 200) == 1 and not bossAlreadyDead then
         self.isBoss = true
         self.image = love.graphics.newImage("Assets/Boss" .. love.math.random(1, NUMBER_OF_BOSSES) .. ".png")
         self.maxHealth = self.level * 175
@@ -240,7 +240,7 @@ function Enemy:update(dt)
             
             player:giveExp()
 
-            local goldIncrease = love.math.random(1, 20)
+            local goldIncrease = love.math.random(self.level * 2, self.level * 4)
             player.gold = player.gold + goldIncrease
             player.totalGold = player.totalGold + goldIncrease
 
@@ -286,14 +286,15 @@ function Enemy:draw()
         resetColor()
 
         drawSpecialAttack()
+
+        if self:attacking() then
+            setColor(255/255, 0, 0, 200/255)
+            love.graphics.setLineWidth(5)
+            love.graphics.line(enemyAttack.x1, enemyAttack.y1, enemyAttack.x2, enemyAttack.y2)
+            resetColor()
+        end
     end
 
-    if self:attacking() then
-        setColor(255/255, 0, 0, 200/255)
-        love.graphics.setLineWidth(5)
-        love.graphics.line(enemyAttack.x1, enemyAttack.y1, enemyAttack.x2, enemyAttack.y2)
-        resetColor()
-    end
 end
 
 function Enemy:attacking()

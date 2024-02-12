@@ -19,15 +19,17 @@ function attackBlocked()
 end
 
 local function reset(self)
+    currentLevel = 0
+    deathDelayTimer = 0
+
     self.health = self.maxHealth
     map.currentRoom = Room(0, 0, 0, {})
+    map.currentRoom.buttons = map.currentRoom:getButtons()
 
     for _, button in ipairs(map.currentRoom.buttons) do
         button.visible = true
     end
 
-    currentLevel = 0
-    deathDelayTimer = 0
     self.dead = false
     self.deaths = self.deaths + 1
 end
@@ -88,7 +90,7 @@ function Player:new()
     self.x = self.defaultPosition.x
     self.y = self.defaultPosition.y
 
-    self.tutorialNumber = 0
+    self.tutorialNumber = 1
     self.enemiesKilled = 0
     self.healthPotions = 3
     self.chestsLooted = 0
@@ -113,8 +115,10 @@ function Player:new()
 
     self.waypoints = { 0 }
     self.waypointDisplay = {}
-    self.bossesDead = {}
+    self.bossesDead = { 0 }
 
+    self.listenedToOpeningScene = false
+    self.currentTutorialAutdio = love.audio.newSource("SFX/Tutorial1Voice.wav", "static")
     self.playingTutorial = false
     self.dead = false
 end
@@ -135,6 +139,8 @@ function Player:draw()
     end
 
     self:playerAttackHandler()
+
+    setColor(1, 1, 1, 1)
 
     if #self.waypointDisplay > 0 then
         for i, point in ipairs(self.waypointDisplay) do
@@ -166,17 +172,20 @@ function Player:isSwinging()
     return swingingSword
 end
 
-function Player:giveExp()
-    self.exp = self.exp + (enemy.level * 5) + 20
-    self.enemiesKilled = self.enemiesKilled + 1
-
-    if self.exp >= self.expNeeded then
+function Player:updateExp()
+    while self.exp >= self.expNeeded do
         music:play(music.sfx.levelUpSFX)
         self.exp = self.exp - self.expNeeded
         self.level = self.level + 1
         self.maxHealth = (self.level * 10) + 200
         self.expNeeded = self.level * 100
     end
+end
+
+function Player:giveExp()
+    self.exp = self.exp + (enemy.level * 5) + 20
+    self.enemiesKilled = self.enemiesKilled + 1
+    self:updateExp()
 end
 
 function Player:playerAttackHandler()
@@ -247,17 +256,6 @@ function Player:mousepressed(x, y, button, istouch, presses)
             end
         end
     end
-
-    if button == 1 and self.playingTutorial then
-        self.tutorialNumber = self.tutorialNumber + 1
-
-        if self.tutorialNumber == 35 then
-            self.playingTutorial = false
-            self.tutorialNumber = 0
-        else
-            love.audio.newSource("SFX/Tutorial" .. self.tutorialNumber .. "Voice.wav", "static"):play()
-        end
-    end
 end
 
 function Player:mousemoved(x, y, dx, dy, istouch)
@@ -267,10 +265,20 @@ function Player:mousemoved(x, y, dx, dy, istouch)
 end
 
 function Player:keypressed(key)
-    if key == "h" and self.healthPotions > 0 then
+    if key == "h" then
         self:useHealthPotion()
     elseif key == "escape" then
-        ui.skipScenes = true
+        if playStory ~= 0 then
+            music.voice["voiceStory" .. playStory .. playStoryPart]:stop()
+            player.listenedToOpeningScene = true
+            playStory = 0
+            playStoryPart = 1
+        end
+        
+        if player.playingTutorial then
+            player.playingTutorial = false
+            player.currentTutorialAutdio:stop()
+        end
     end
 end
 
@@ -304,6 +312,7 @@ function Player:addKey()
 
         table.insert(player.inventory.items, InventoryItem("Key", keyNumber, currentLevel))
         map.currentRoom.buttons = {}
+        saveData()
     end
 end
 
@@ -317,6 +326,7 @@ function Player:addRelic()
     player.relics = player.relics + 1
     music:play(music.sfx.pickupRelicSFX)
     map.currentRoom.buttons = {}
+    saveData()
 
     if player.relics == 1 then
         playStory = 2
@@ -339,13 +349,16 @@ function Player:addTeleport()
         table.insert(player.waypoints, currentLevel)
         map.currentRoom.teleportDiscovered = true
         map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/TeleportShrineB.png")
+        saveData()
     elseif #player.waypointDisplay == 0 then
+        music:play(music.sfx.teleportSFX)
         player.waypointDisplay = {}
 
         for _, point in ipairs(player.waypoints) do
             table.insert(player.waypointDisplay, Waypoint(point))
         end
     else
+        music:play(music.sfx.teleportCancelSFX)
         player.waypointDisplay = {}
     end
 end
@@ -380,15 +393,19 @@ function Player:teleport(level)
         map.showMap = true
     end
 
-    music:play(music.sfx.teleportSFX)
+    music:play(music.sfx.teleportCastSFX)
 end
 
 function Player:useHealthPotion()
     if player.health ~= player.maxHealth then
-        self.health = self.maxHealth
-        self.healthPotions = self.healthPotions - 1
-        music:play(music.sfx.drinkPotionSFX)
-        music:play(music.sfx.potionHealSFX)
+        if player.healthPotions > 0 then
+            self.health = self.maxHealth
+            self.healthPotions = self.healthPotions - 1
+            music:play(music.sfx.drinkPotionSFX)
+            music:play(music.sfx.potionHealSFX)
+        else
+            music.sfx.noPotionsVoiceSFX:play()
+        end
     else
         music.sfx.alreadyFullHealthVoiceSFX:play()
     end
@@ -400,7 +417,7 @@ function Player:heal()
             player.health = player.maxHealth
             music:play(music.sfx.healSFX)
             map.currentRoom.healingShrineUsed = true
-            map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/HealingShrineb.png")
+            map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/HealingShrineB.png")
         else
             music.sfx.alreadyFullHealthVoiceSFX:play()
         end
@@ -418,6 +435,7 @@ function Player:openInventory()
         if player.inventory.sellingMode then
             player.inventory.sellingMode = false
             music.sfx.merchantPartingSFX:play()
+            saveData()
         end
 
         music:play(music.sfx.bagCloseSFX)
@@ -437,7 +455,7 @@ end
 
 function Player:playTutorial()
     player.playingTutorial = true
-    love.audio.newSource("SFX/Tutorial0Voice.wav", "static"):play()
+    player.currentTutorialAutdio:play()
 end
 
 function Player:openShop()

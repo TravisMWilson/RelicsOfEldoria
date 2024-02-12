@@ -246,10 +246,10 @@ function Map:generate(seed)
         local newRow = connectedEmptySpots[roomSpot][1]
         local newCol = connectedEmptySpots[roomSpot][2]
 
-        if love.math.random(1, 100) == ROOM_TYPES.teleport and not hasTeleportRoom then
+        if love.math.random(1, 50) == ROOM_TYPES.teleport and not hasTeleportRoom then
             map.dungeonMap[newCol][newRow] = ROOM_TYPES.teleport
             hasTeleportRoom = true
-        elseif love.math.random(1, 100) == ROOM_TYPES.health and not hasHealingRoom then
+        elseif love.math.random(1, 50) == ROOM_TYPES.health and not hasHealingRoom then
             map.dungeonMap[newCol][newRow] = ROOM_TYPES.health
             hasHealingRoom = true
         end
@@ -259,24 +259,23 @@ function Map:generate(seed)
         if map.dungeonMap[newCol][newRow] ~= ROOM_TYPES.teleport and map.dungeonMap[newCol][newRow] ~= ROOM_TYPES.health then
             if love.math.random(1, 40) == ROOM_TYPES.chest then
                 map.dungeonMap[newCol][newRow] = ROOM_TYPES.chest
-            elseif love.math.random(1, 30) == ROOM_TYPES.key then
+            elseif love.math.random(1, 40) == ROOM_TYPES.key then
                 map.dungeonMap[newCol][newRow] = ROOM_TYPES.key
-            elseif love.math.random(1, 20) == ROOM_TYPES.potion then
+            elseif love.math.random(1, 40) == ROOM_TYPES.potion then
                 map.dungeonMap[newCol][newRow] = ROOM_TYPES.potion
-            elseif love.math.random(1, 10) == ROOM_TYPES.merchant and not hasMerchantRoom then
+            elseif love.math.random(1, 40) == ROOM_TYPES.merchant and not hasMerchantRoom then
                 map.dungeonMap[newCol][newRow] = ROOM_TYPES.merchant
                 hasMerchantRoom = true
 
                 player.inventory.shopItems = {}
 
-                local numberOfShopItems = love.math.random(12, 24)
+                local numberOfShopItems = love.math.random(5, 15)
             
-                if love.math.random(1, 10) == 1 then
+                if love.math.random(1, 5) == 1 then
                     table.insert(player.inventory.shopItems, ShopItem("Potion", 0, 0))
                 end
-                print(numberOfShopItems)
+
                 for i = 1, numberOfShopItems do
-                    print("inserted " .. tostring(i))
                     local type, code, level = player.inventory.getRandomWeapon(currentLevel, currentLevel + 10)
                     table.insert(player.inventory.shopItems, ShopItem(type, code, level))
                 end
@@ -378,6 +377,12 @@ function Map:goToRoom(room)
             map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/Chest" .. chestNumber .. "b.png")
         end
     elseif map.currentRoom.type == ROOM_TYPES.teleport then
+        for _, waypoint in ipairs(player.waypoints) do
+            if waypoint == currentLevel then
+                map.currentRoom.teleportDiscovered = true
+            end
+        end
+
         if not map.currentRoom.teleportDiscovered then
             map.currentRoom.buttons[1].image = love.graphics.newImage("Assets/TeleportShrineA.png")
         else
@@ -426,12 +431,13 @@ function Map:openChest()
         if #player.inventory.items < 20 then
             music:play(music.sfx.lootChestSFX)
             map.currentRoom.chest.isLooted = true
+            player.chestsLooted = player.chestsLooted + 1
 
-            local goldIncrease = love.math.random(200, 500)
+            local goldIncrease = love.math.random((currentLevel * 5) + 100, (currentLevel * 10) + 300)
             player.gold = player.gold + goldIncrease
             player.totalGold = player.totalGold + goldIncrease
             
-            player.inventory:giveRandomWeapon(currentLevel + 2, currentLevel + 4)
+            player.inventory:giveRandomWeapon(currentLevel + 2, currentLevel + 6)
         else
             music.sfx.inventoryAlreadyFullVoiceSFX:play()
         end

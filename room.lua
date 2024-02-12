@@ -195,7 +195,7 @@ local function getClickArea(self)
     end
 end
 
-local function getButtons(self)
+function Room:getButtons()
     if self.type == ROOM_TYPES.chest then
         return ROOM_BUTTONS.chest
     elseif self.type == ROOM_TYPES.key then
@@ -224,7 +224,7 @@ function Room:new(row, col, type, adjacentRooms)
     self.doors = getDoors(self)
     self.background = selectBackground(self)
     self.clickAreas = getClickArea(self)
-    self.buttons = getButtons(self)
+    self.buttons = self:getButtons()
 
     self.image = love.graphics.newImage("Assets/Background" .. self.background .. ".png")
 

@@ -3,6 +3,7 @@ UI = Object:extend()
 textInstances = {}
 
 playStory = 0
+playStoryPart = 1
 
 local DISTANCE_INCREMENT = 80
 local TIME_INCREMENT = 0.1
@@ -18,10 +19,10 @@ local healthBar = {}
 local relicUI = {}
 
 local playingStory = false
-local playStoryPart = 1
 local storyOffsetX = 0
 local storyOffsetY = 0
 local storyLogoAlpha = 5
+local tutorialDelayTimer = 0
 
 local currentColor = { r = 255/255, g = 255/255, b = 255/255, a = 255/255 }
 local currentFont = love.graphics.getFont()
@@ -158,7 +159,7 @@ local function drawDisplay()
         )
         resetFont()
     end
-    
+
     resetColor()
 end
 
@@ -226,6 +227,26 @@ local function drawIndicators()
     )
     resetFont()
     resetColor()
+
+    setColor(0, 0, 0, 1)
+    setFont(60)
+    love.graphics.print(
+        tostring(currentLevel),
+        (love.graphics:getWidth() / 2) - (love.graphics.getFont():getWidth(tostring(currentLevel)) / 2),
+        17
+    )
+    resetFont()
+    resetColor()
+
+    setColor(1, 1, 1, 1)
+    setFont(60)
+    love.graphics.print(
+        tostring(currentLevel),
+        (love.graphics:getWidth() / 2) - (love.graphics.getFont():getWidth(tostring(currentLevel)) / 2),
+        15
+    )
+    resetFont()
+    resetColor()
 end
 
 function UI:new()
@@ -266,59 +287,78 @@ function UI:new()
         uiButton.visible = true
     end
 
-    self.skipScenes = false
+    self.showSkipMessage = false
 
     setupDisplay(self)
     playStory = 1
 end
 
 function UI:update(dt)
-    updateIndicators(dt)
+    if not player.playingTutorial then
+        updateIndicators(dt)
 
-    setColor(255/255, (400 * (player.health / player.maxHealth))/255 + 0.25, (400 * (player.health / player.maxHealth))/255 + 0.25, 255/255)
-    player.damage = math.ceil((distanceIndicator.currentFrame * timeIndicator.currentFrame) * (player.weaponLevel * 0.25))
+        setColor(255/255, (400 * (player.health / player.maxHealth))/255 + 0.25, (400 * (player.health / player.maxHealth))/255 + 0.25, 255/255)
+        player.damage = math.ceil((distanceIndicator.currentFrame * timeIndicator.currentFrame) * (player.weaponLevel * 0.25))
 
-    if not playingStory then
-        if playStory ~= 0 then
-            music.voice["voiceStory" .. playStory .. playStoryPart]:play()
-            playingStory = true
-            
-            if playStory == 4 then
-                enemy.dead = true
-                map.currentRoom = Room(0, 0, 0, {})
-                player.health = player.maxHealth
+        if not playingStory then
+            if playStory ~= 0 then
+                music.voice["voiceStory" .. playStory .. playStoryPart]:play()
+                playingStory = true
+                
+                if playStory == 4 then
+                    enemy.dead = true
+                    map.currentRoom = Room(0, 0, 0, {})
+                    player.health = player.maxHealth
 
-                for _, button in ipairs(map.currentRoom.buttons) do
-                    button.visible = true
-                end
+                    for _, button in ipairs(map.currentRoom.buttons) do
+                        button.visible = true
+                    end
 
-                currentLevel = 0
-            end
-        end
-    else
-        if playStory ~= 0 then
-            if not music.voice["voiceStory" .. playStory .. playStoryPart]:isPlaying() then
-                playStoryPart = playStoryPart + 1
-                playingStory = false
-
-                if (playStory == 1 and playStoryPart >= 8)
-                or (playStory == 2 and playStoryPart >= 3)
-                or (playStory == 3 and playStoryPart >= 3)
-                or (playStory == 4 and playStoryPart >= 5) then
-                    playStory = 0
-                    playStoryPart = 1
-
-                    self.skipScenes = false
+                    currentLevel = 0
                 end
             end
-        end
-    end
-    
-    for i = #textInstances, 1, -1 do
-        textInstances[i]:update(dt)
+        else
+            if playStory ~= 0 then
+                if not music.voice["voiceStory" .. playStory .. playStoryPart]:isPlaying() then
+                    playStoryPart = playStoryPart + 1
+                    playingStory = false
 
-        if textInstances[i].remove then
-            table.remove(textInstances, i)
+                    if (playStory == 1 and playStoryPart >= 8)
+                    or (playStory == 2 and playStoryPart >= 3)
+                    or (playStory == 3 and playStoryPart >= 3)
+                    or (playStory == 4 and playStoryPart >= 5) then
+                        if playStory == 1 then
+                            player.listenedToOpeningScene = true
+                        end
+
+                        playStory = 0
+                        playStoryPart = 1
+                    end
+                end
+            end
+        end
+        
+        for i = #textInstances, 1, -1 do
+            textInstances[i]:update(dt)
+
+            if textInstances[i].remove then
+                table.remove(textInstances, i)
+            end
+        end
+    elseif not player.currentTutorialAutdio:isPlaying() then
+        tutorialDelayTimer = tutorialDelayTimer + dt
+
+        if tutorialDelayTimer > 1 then
+            tutorialDelayTimer = 0
+            player.tutorialNumber = player.tutorialNumber + 1
+
+            if player.tutorialNumber == 35 then
+                player.playingTutorial = false
+                player.tutorialNumber = 1
+            else
+                player.currentTutorialAutdio = love.audio.newSource("SFX/Tutorial" .. player.tutorialNumber .. "Voice.wav", "static")
+                player.currentTutorialAutdio:play()
+            end
         end
     end
 end
@@ -337,7 +377,7 @@ function UI:draw()
         button:draw()
     end
 
-    if playStory == 1 and not self.skipScenes then
+    if playStory == 1 then
         if playStoryPart <= 2 then
             storyOffsetX = storyOffsetX - 0.2
             storyOffsetY = storyOffsetY - 0.3
@@ -356,6 +396,14 @@ function UI:draw()
             storyOffsetX = -50
             storyOffsetY = storyOffsetY + 0.35
             love.graphics.draw(self.images.storyScene2, storyOffsetX, storyOffsetY)
+        end
+
+        if self.showSkipMessage then
+            setColor(0, 0, 0, storyLogoAlpha)
+            setFont(24)
+            love.graphics.print("ESC to Skip", love.graphics:getWidth() - love.graphics.getFont():getWidth("ESC to Skip") - 20, 20)
+            resetFont()
+            resetColor()
         end
     elseif playStory == 4 then
         if playStoryPart <= 3 then

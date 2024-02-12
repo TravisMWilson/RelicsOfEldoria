@@ -62,7 +62,11 @@ function ShopItem:draw()
     resetFont()
     resetColor()
 
-    local goldCost = tostring(math.floor(self.level * 33.33))
+    local goldCost = tostring(math.floor(self.level * ((self.level * 1.11) + 33)))
+
+    if self.type == "Potion" then
+        goldCost = tostring(player.level * 50)
+    end
 
     setColor(254/255, 246/255, 133/255, 255/255)
     setFont(20)

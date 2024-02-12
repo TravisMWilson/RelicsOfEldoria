@@ -147,6 +147,30 @@ function InventoryItem:deleteItem()
     end
 end
 
+function InventoryItem:equip(item)
+    item.selected = true
+
+    player.image = love.graphics.newImage("Assets/" .. item.type .. item.code .. ".png")
+    player.width = player.image:getWidth()
+    player.height = player.image:getHeight()
+    player.weaponLevel = item.level
+
+    if item.type == "Staff" or item.type == "Spear" then
+        player.defaultPosition = {
+            x = (love.graphics.getWidth() * 0.75) - (player.width * 0.75),
+            y = love.graphics.getHeight() - (player.height * 0.65)
+        }
+    else
+        player.defaultPosition = {
+            x = (love.graphics.getWidth() * 0.75) - (player.width * 0.75),
+            y = love.graphics.getHeight() - (player.height * 0.8)
+        }
+    end
+
+    player.x = player.defaultPosition.x
+    player.y = player.defaultPosition.y
+end
+
 function InventoryItem:equipItem()
     music:play(music.sfx.equipWeaponSFX)
 
@@ -156,27 +180,7 @@ function InventoryItem:equipItem()
         end
         
         if pointRectCollision(love.mouse:getX(), love.mouse:getY(), item) then
-            item.selected = true
-
-            player.image = love.graphics.newImage("Assets/" .. item.type .. item.code .. ".png")
-            player.width = player.image:getWidth()
-            player.height = player.image:getHeight()
-            player.weaponLevel = item.level
-
-            if item.type == "Staff" or item.type == "Spear" then
-                player.defaultPosition = {
-                    x = (love.graphics.getWidth() * 0.75) - (player.width * 0.75),
-                    y = love.graphics.getHeight() - (player.height * 0.65)
-                }
-            else
-                player.defaultPosition = {
-                    x = (love.graphics.getWidth() * 0.75) - (player.width * 0.75),
-                    y = love.graphics.getHeight() - (player.height * 0.8)
-                }
-            end
-
-            player.x = player.defaultPosition.x
-            player.y = player.defaultPosition.y
+            InventoryItem:equip(item)
         end
     end
 end

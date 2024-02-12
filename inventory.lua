@@ -20,7 +20,9 @@ local function updateConfirmPopup(self)
         if self.confirmPopup.answer == "Yes" then
             if not self.buying then
                 if self.sellingMode then
-                    player.gold = player.gold + math.floor(player.inventory.items[self.indexToDelete].level * 7.77)
+                    local goldIncrease = math.floor(player.inventory.items[self.indexToDelete].level * ((player.inventory.items[self.indexToDelete].level * 0.11) + 11))
+                    player.gold = player.gold + goldIncrease
+                    player.totalGold = player.totalGold + goldIncrease
                     music:play(music.sfx.coinSellSFX)
                 else
                     music:play(music.sfx.deleteItemSFX)
@@ -54,26 +56,29 @@ local function updateConfirmPopup(self)
                 end
             else
                 if #self.items < self.maxItems then
-                    if self.buying then
-                        player.gold = player.gold + math.floor(self.buyingItem.level * 7.77)
-                        music:play(music.sfx.coinSellSFX)
-                    else
-                        if player.gold - math.floor(self.buyingItem.level * 33.33) >= 0 then
-                            player.gold = player.gold - math.floor(self.buyingItem.level * 33.33)
-                            music:play(music.sfx.coinSellSFX)
+                    local itemCost = math.floor(self.buyingItem.level * ((self.buyingItem.level * 1.11) + 33))
 
-                            if self.buyingItem.type == "Potion" then
-                                player.healthPotions = player.healthPotions + 1
-                            else
-                                table.insert(self.items, InventoryItem(self.buyingItem.type, self.buyingItem.code, self.buyingItem.level))
-                            end
+                    if self.buyingItem.type == "Potion" then
+                        itemCost = player.level * 50
+                    end
+
+                    if player.gold - itemCost >= 0 then
+                        player.gold = player.gold - itemCost
+                        music:play(music.sfx.coinSellSFX)
+
+                        if self.buyingItem.type == "Potion" then
+                            player.healthPotions = player.healthPotions + 1
                         else
-                            music.sfx.notEnoughGoldSFX:play()
+                            table.insert(self.items, InventoryItem(self.buyingItem.type, self.buyingItem.code, self.buyingItem.level))
                         end
+                    else
+                        music.sfx.notEnoughGoldSFX:play()
                     end
                 else
                     music.sfx.alreadyFullSFX:play()
                 end
+
+                self.buying = false
             end
         else
             music:play(music.sfx.buttonPressSFX)
@@ -292,6 +297,8 @@ function Inventory:giveRandomWeapon(minLevel, maxLevel)
         player.inventory.showIcon = love.graphics.newImage("Assets/" .. weaponType ..tostring(weaponCode) .. ".png")
         player.inventory.showLevel = weaponLevel
         player.inventory.showRays = true
+
+        saveData()
 
         if #player.inventory.items == 20 then
             music.sfx.inventoryFullVoiceSFX:play()
