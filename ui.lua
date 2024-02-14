@@ -144,7 +144,7 @@ local function drawDisplay()
         setFont(25)
         love.graphics.print(
             tostring(player.healthPotions),
-            (healthPotionUI.x - 15) - love.graphics.getFont():getWidth(player.healthPotions),
+            (healthPotionUI.x - 15) - love.graphics.getFont():getWidth(tostring(player.healthPotions)),
             (love.graphics:getHeight() - 20) - love.graphics.getFont():getHeight()
         )
         resetFont()
@@ -154,7 +154,7 @@ local function drawDisplay()
         setFont(25)
         love.graphics.print(
             tostring(player.relics),
-            (relicUI.x - 15) - love.graphics.getFont():getWidth(player.relics),
+            (relicUI.x - 15) - love.graphics.getFont():getWidth(tostring(player.relics)),
             (love.graphics:getHeight() - 40) - healthPotionUI.height - love.graphics.getFont():getHeight()
         )
         resetFont()
@@ -227,26 +227,6 @@ local function drawIndicators()
     )
     resetFont()
     resetColor()
-
-    setColor(0, 0, 0, 1)
-    setFont(60)
-    love.graphics.print(
-        tostring(currentLevel),
-        (love.graphics:getWidth() / 2) - (love.graphics.getFont():getWidth(tostring(currentLevel)) / 2),
-        17
-    )
-    resetFont()
-    resetColor()
-
-    setColor(1, 1, 1, 1)
-    setFont(60)
-    love.graphics.print(
-        tostring(currentLevel),
-        (love.graphics:getWidth() / 2) - (love.graphics.getFont():getWidth(tostring(currentLevel)) / 2),
-        15
-    )
-    resetFont()
-    resetColor()
 end
 
 function UI:new()
@@ -262,15 +242,22 @@ function UI:new()
     self.images.enemyHealthBar = love.graphics.newImage("Assets/EnemyHealthBar.png")
     self.images.inventoryTitle = love.graphics.newImage("Assets/InventoryTitle.png")
     self.images.shopBackground = love.graphics.newImage("Assets/ShopBackground.png")
+    self.images.downstairsIcon = love.graphics.newImage("Assets/DownstairsIcon.png")
     self.images.itemBackgound = love.graphics.newImage("Assets/ItemBackground.png")
     self.images.shopItemFrame = love.graphics.newImage("Assets/ShopItemFrame.png")
+    self.images.teleportIcon = love.graphics.newImage("Assets/TeleportIcon.png")
+    self.images.upstairsIcon = love.graphics.newImage("Assets/UpstairsIcon.png")
+    self.images.merchantIcon = love.graphics.newImage("Assets/MerchantIcon.png")
     self.images.confirmPopup = love.graphics.newImage("Assets/ConfirmPopup.png")
     self.images.deleteButton = love.graphics.newImage("Assets/DeleteButton.png")
+    self.images.healingIcon = love.graphics.newImage("Assets/HealingIcon.png")
     self.images.statsButton = love.graphics.newImage("Assets/StatsButton.png")
     self.images.equipButton = love.graphics.newImage("Assets/EquipButton.png")
     self.images.waypointUI = love.graphics.newImage("Assets/WaypointUI.png")
     self.images.scrollMenu = love.graphics.newImage("Assets/ScrollMenu.png")
+    self.images.shopPotion = love.graphics.newImage("Assets/ShopPotion.png")
     self.images.shopTitle = love.graphics.newImage("Assets/ShopTitle.png")
+    self.images.chestIcon = love.graphics.newImage("Assets/ChestIcon.png")
     self.images.relicUI = love.graphics.newImage("Assets/RelicUI.png")
     self.images.death = love.graphics.newImage("Assets/Death.png")
     
@@ -298,7 +285,7 @@ function UI:update(dt)
         updateIndicators(dt)
 
         setColor(255/255, (400 * (player.health / player.maxHealth))/255 + 0.25, (400 * (player.health / player.maxHealth))/255 + 0.25, 255/255)
-        player.damage = math.ceil((distanceIndicator.currentFrame * timeIndicator.currentFrame) * (player.weaponLevel * 0.25))
+        player.damage = math.ceil((distanceIndicator.currentFrame * timeIndicator.currentFrame) * (player.weaponLevel * 0.125))
 
         if not playingStory then
             if playStory ~= 0 then

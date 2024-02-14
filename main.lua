@@ -40,62 +40,53 @@ function love.load()
 
     loadData()
     updateData()
-    stopwatch("love load")
 end
 
 function love.draw()
     map:draw()
-    
-    stopwatch("map draw")
     enemy:draw()
-    stopwatch("enemy draw")
     player:draw()
-    stopwatch("player draw")
     ui:draw()
-    stopwatch("ui draw")
 end
 
 function love.update(dt)
     map:update(dt)
-    stopwatch("map update")
+    --stopwatch("map update")
     music:update(dt)
-    stopwatch("music update")
+    --stopwatch("music update")
 
     if not player.playingTutorial then
         player:update(dt)
-        stopwatch("player update")
+        --stopwatch("player update")
         enemy:update(dt)
-        stopwatch("enemy update")
+        --stopwatch("enemy update")
     end
 
     ui:update(dt)
-    stopwatch("ui update")
+    --stopwatch("ui update")
 end
 
 function love.mousepressed(x, y, button, istouch, presses)
     if not player.playingTutorial then
         player:mousepressed(x, y, button, istouch, presses)
-        stopwatch("player mousepressed")
+        --stopwatch("player mousepressed")
         ui:mousepressed(x, y, button, istouch, presses)
-        stopwatch("ui mousepressed")
+        --stopwatch("ui mousepressed")
         map:mousepressed(x, y, button, istouch, presses)
-        stopwatch("map mousepressed")
+        --stopwatch("map mousepressed")
     end
 end
 
 function love.mousemoved(x, y, dx, dy, istouch)
     player:mousemoved(x, y, dx, dy, istouch)
-    stopwatch("player mousemoved")
 end
 
 function love.keypressed(key)
     player:keypressed(key)
-    stopwatch("player keypressed " .. key)
 end
 
 function love.wheelmoved(x, y)
     player:wheelmoved(x, y)
-    stopwatch("player wheelmoved")
 end
 
 function love.quit()

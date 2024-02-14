@@ -14,7 +14,7 @@ function ShopItem:new(type, code, level)
     self.y = 0
 
     if type == "Potion" then
-        self.icon = ui.images.healthPotionUI
+        self.icon = ui.images.shopPotion
     else
         self.icon = love.graphics.newImage("Assets/" .. type .. code .. ".png")
     end
@@ -62,7 +62,7 @@ function ShopItem:draw()
     resetFont()
     resetColor()
 
-    local goldCost = tostring(math.floor(self.level * ((self.level * 1.11) + 33)))
+    local goldCost = tostring(math.floor(self.level * ((self.level * 1.75) + 75)))
 
     if self.type == "Potion" then
         goldCost = tostring(player.level * 50)

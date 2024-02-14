@@ -56,7 +56,7 @@ local function updateConfirmPopup(self)
                 end
             else
                 if #self.items < self.maxItems then
-                    local itemCost = math.floor(self.buyingItem.level * ((self.buyingItem.level * 1.11) + 33))
+                    local itemCost = math.floor(self.buyingItem.level * ((self.buyingItem.level * 1.75) + 75))
 
                     if self.buyingItem.type == "Potion" then
                         itemCost = player.level * 50

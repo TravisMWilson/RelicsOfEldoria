@@ -202,11 +202,47 @@ function Map:draw()
                         love.graphics.rectangle("fill", roomX, roomY, tileSize - 2, tileSize - 2)
                     end
 
+                    if room == map.currentRoom or (room.discovered and room.searched and roomIsClose(map.currentRoom, room)) then
+                        if room.type == ROOM_TYPES.teleport then
+                            love.graphics.draw(ui.images.teleportIcon, roomX, roomY)
+                        elseif room.type == ROOM_TYPES.health then
+                            love.graphics.draw(ui.images.healingIcon, roomX, roomY)
+                        elseif room.type == ROOM_TYPES.downstairs then
+                            love.graphics.draw(ui.images.downstairsIcon, roomX, roomY)
+                        elseif room.type == ROOM_TYPES.upstairs then
+                            love.graphics.draw(ui.images.upstairsIcon, roomX, roomY)
+                        elseif room.type == ROOM_TYPES.chest then
+                            love.graphics.draw(ui.images.chestIcon, roomX, roomY)
+                        elseif room.type == ROOM_TYPES.merchant then
+                            love.graphics.draw(ui.images.merchantIcon, roomX, roomY)
+                        end
+                    end
+
                     resetColor()
                 end
             end
         end
     end
+
+    setColor(0, 0, 0, 1)
+    setFont(60)
+    love.graphics.print(
+        tostring(currentLevel),
+        (love.graphics:getWidth() / 2) - (love.graphics.getFont():getWidth(tostring(currentLevel)) / 2),
+        17
+    )
+    resetFont()
+    resetColor()
+
+    setColor(1, 1, 1, 1)
+    setFont(60)
+    love.graphics.print(
+        tostring(currentLevel),
+        (love.graphics:getWidth() / 2) - (love.graphics.getFont():getWidth(tostring(currentLevel)) / 2),
+        15
+    )
+    resetFont()
+    resetColor()
 end
 
 function Map:generate(seed)
@@ -296,7 +332,7 @@ function Map:generate(seed)
 
     map.dungeonMap[downStairsY][downStairsX] = ROOM_TYPES.downstairs
 
-    printMap()
+    --printMap()
     populateRooms()
     
     love.math.setRandomSeed(os.time())
